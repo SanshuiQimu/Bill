@@ -1,9 +1,9 @@
 package com.sanshuiqimu.bill.ui.screens.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,16 +15,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,7 +29,6 @@ import com.sanshuiqimu.bill.ui.components.EmptyState
 import com.sanshuiqimu.bill.ui.components.MonthSelector
 import com.sanshuiqimu.bill.ui.components.SummaryCard
 import com.sanshuiqimu.bill.ui.components.TransactionCard
-import com.sanshuiqimu.bill.ui.theme.ExpenseRed
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -135,10 +130,10 @@ fun HomeScreen(
 }
 
 /**
- * 支持左滑删除的单条交易项。
+ * 单条交易项。
  *
- * 使用 Material3 的 [SwipeToDismissBox]：从右向左滑动（[SwipeToDismissBoxValue.EndToStart]）
- * 时触发删除回调；背景展示红色删除提示。点击内容区域可进入编辑。
+ * 使用 [Row] 包裹 [TransactionCard] 与一个删除 [IconButton]；
+ * 点击卡片可进入编辑，点击删除按钮触发删除回调。
  *
  * @param transaction 交易记录
  * @param onDelete    删除回调
@@ -151,46 +146,28 @@ private fun SwipeToDeleteTransactionItem(
     onDelete: () -> Unit,
     onClick: () -> Unit
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { dismissValue ->
-            if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
-                onDelete()
-                true
-            } else {
-                false
-            }
-        }
-    )
-
-    SwipeToDismissBox(
-        state = dismissState,
-        backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(ExpenseRed)
-                    .padding(horizontal = 24.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Delete,
-                    contentDescription = "删除",
-                    tint = Color.White
-                )
-            }
-        },
-        content = {
-            TransactionCard(
-                category = transaction.category,
-                description = transaction.description.orEmpty(),
-                amount = transaction.amountCents / 100.0,
-                type = transaction.type,
-                date = formatDate(transaction.date),
-                onClick = onClick,
-                modifier = Modifier.padding(horizontal = 16.dp)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TransactionCard(
+            category = transaction.category,
+            description = transaction.description.orEmpty(),
+            amount = transaction.amountCents / 100.0,
+            type = transaction.type,
+            date = formatDate(transaction.date),
+            onClick = onClick,
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 16.dp)
+        )
+        IconButton(onClick = onDelete) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = "删除"
             )
         }
-    )
+    }
 }
 
 /**

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import com.sanshuiqimu.bill.data.BillDatabase
 import com.sanshuiqimu.bill.data.entity.CategoryEntity
 import com.sanshuiqimu.bill.data.repository.BillRepository
 import com.sanshuiqimu.bill.util.TransactionType

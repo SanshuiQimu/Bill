@@ -9,7 +9,6 @@
 
         <!-- 窗口背景 -->
         <item name="android:windowBackground">@color/bg_dark</item>
-        <item name="android:windowStatusBarColor">@android:color/transparent</item>
 
         <!-- 状态栏与导航栏 -->
         <item name="android:statusBarColor">@android:color/transparent</item>

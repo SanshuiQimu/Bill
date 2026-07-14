@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -92,6 +93,7 @@ fun AmountText(
  * @param modifier 修饰符
  * @param onClick 点击回调
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionCard(
     category: String,
@@ -263,6 +265,7 @@ fun SummaryCard(
  * @param modifier 修饰符
  * @param onClick 点击回调
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryChip(
     label: String,

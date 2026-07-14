@@ -212,7 +212,7 @@ private fun CategoryStatRow(
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { stat.percentage },
+                progress = stat.percentage,
                 modifier = Modifier.fillMaxWidth(),
                 color = typeColor,
                 trackColor = typeColor.copy(alpha = 0.15f)
