@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 应用名称 -->
+    <string name="app_name">记账本</string>
+
+    <!-- 通用按钮 -->
+    <string name="action_confirm">确定</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_save">保存</string>
+    <string name="action_delete">删除</string>
+    <string name="action_edit">编辑</string>
+    <string name="action_back">返回</string>
+    <string name="action_add">添加</string>
+    <string name="action_search">搜索</string>
+    <string name="action_settings">设置</string>
+    <string name="action_share">分享</string>
+    <string name="action_export">导出</string>
+    <string name="action_import">导入</string>
+
+    <!-- 页面标题 -->
+    <string name="title_home">首页</string>
+    <string name="title_statistics">统计</string>
+    <string name="title_bills">账单</string>
+    <string name="title_mine">我的</string>
+    <string name="title_add_bill">记一笔</string>
+    <string name="title_edit_bill">编辑账单</string>
+    <string name="title_bill_detail">账单详情</string>
+    <string name="title_category_manage">分类管理</string>
+    <string name="title_budget">预算设置</string>
+    <string name="title_about">关于</string>
+
+    <!-- 收支类型 -->
+    <string name="type_income">收入</string>
+    <string name="type_expense">支出</string>
+    <string name="type_transfer">转账</string>
+
+    <!-- 收入分类 -->
+    <string name="category_salary">工资</string>
+    <string name="category_bonus">奖金</string>
+    <string name="category_investment">理财收益</string>
+    <string name="category_part_time">兼职</string>
+    <string name="category_red_packet">红包</string>
+    <string name="category_other_income">其他收入</string>
+
+    <!-- 支出分类 -->
+    <string name="category_food">餐饮</string>
+    <string name="category_transport">交通</string>
+    <string name="category_shopping">购物</string>
+    <string name="category_entertainment">娱乐</string>
+    <string name="category_housing">居家</string>
+    <string name="category_medical">医疗</string>
+    <string name="category_education">教育</string>
+    <string name="category_social">社交</string>
+    <string name="category_travel">旅行</string>
+    <string name="category_other_expense">其他支出</string>
+
+    <!-- 首页 -->
+    <string name="home_month_income">本月收入</string>
+    <string name="home_month_expense">本月支出</string>
+    <string name="home_month_balance">本月结余</string>
+    <string name="home_today_expense">今日支出</string>
+    <string name="home_recent_bills">最近账单</string>
+    <string name="home_no_bills">暂无账单，点击右下角开始记账</string>
+
+    <!-- 添加账单 -->
+    <string name="hint_amount">请输入金额</string>
+    <string name="hint_remark">备注（选填）</string>
+    <string name="hint_date">选择日期</string>
+    <string name="label_amount">金额</string>
+    <string name="label_category">分类</string>
+    <string name="label_date">日期</string>
+    <string name="label_remark">备注</string>
+    <string name="label_type">类型</string>
+
+    <!-- 统计 -->
+    <string name="statistics_income">收入统计</string>
+    <string name="statistics_expense">支出统计</string>
+    <string name="statistics_by_category">分类占比</string>
+    <string name="statistics_by_month">月度趋势</string>
+    <string name="statistics_no_data">暂无统计数据</string>
+
+    <!-- 提示信息 -->
+    <string name="toast_save_success">保存成功</string>
+    <string name="toast_save_failed">保存失败</string>
+    <string name="toast_delete_success">删除成功</string>
+    <string name="toast_delete_failed">删除失败</string>
+    <string name="toast_amount_empty">请输入金额</string>
+    <string name="toast_category_empty">请选择分类</string>
+    <string name="toast_confirm_delete">确定要删除这条记录吗？</string>
+    <string name="toast_export_success">导出成功</string>
+    <string name="toast_export_failed">导出失败</string>
+
+    <!-- 我的 -->
+    <string name="mine_budget">预算管理</string>
+    <string name="mine_category">分类管理</string>
+    <string name="mine_backup">数据备份</string>
+    <string name="mine_settings">设置</string>
+    <string name="mine_about">关于记账本</string>
+    <string name="mine_share">分享给好友</string>
+
+    <!-- 关于 -->
+    <string name="about_version">版本</string>
+    <string name="about_description">记账本是一款简洁好用的个人记账工具，帮你轻松管理日常收支。</string>
+    <string name="about_author">作者：Sanshuiqimu</string>
+
+    <!-- 设置 -->
+    <string name="setting_night_mode">深色模式</string>
+    <string name="setting_night_mode_follow">跟随系统</string>
+    <string name="setting_night_mode_on">开启</string>
+    <string name="setting_night_mode_off">关闭</string>
+    <string name="setting_reminder">记账提醒</string>
+    <string name="setting_currency">货币单位</string>
+    <string name="setting_clear_data">清空数据</string>
+
+    <!-- 其他 -->
+    <string name="empty_data">暂无数据</string>
+    <string name="loading">加载中…</string>
+    <string name="currency_symbol">¥</string>
+    <string name="format_amount">¥%1$.2f</string>
+    <string name="format_month">%1$d年%2$d月</string>
+</resources>

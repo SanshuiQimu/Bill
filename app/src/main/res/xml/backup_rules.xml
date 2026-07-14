@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- 备份应用数据库 -->
+    <include domain="database" path="bill.db" />
+    <!-- 备份应用共享偏好设置 -->
+    <include domain="sharedpref" path="." />
+    <!-- 备份应用外部存储的导出文件 -->
+    <include domain="file" path="exports/" />
+
+    <!-- 排除敏感缓存数据 -->
+    <exclude domain="database" path="cache.db" />
+    <exclude domain="sharedpref" path="device.xml" />
+</full-backup-content>

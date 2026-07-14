@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 应用主色调 -->
+    <color name="bill_primary">#2E7D32</color>
+    <color name="bill_primary_dark">#1B5E20</color>
+    <color name="bill_accent">#FF6F00</color>
+    <color name="bill_primary_light">#A5D6A7</color>
+
+    <!-- 收支颜色 -->
+    <color name="color_income">#4CAF50</color>
+    <color name="color_expense">#F44336</color>
+    <color name="color_transfer">#2196F3</color>
+
+    <!-- 基础颜色 -->
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+
+    <!-- 文本颜色 -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#BDBDBD</color>
+    <color name="text_light">#FFFFFF</color>
+
+    <!-- 背景颜色 -->
+    <color name="bg_page">#F5F5F5</color>
+    <color name="bg_card">#FFFFFF</color>
+    <color name="bg_divider">#E0E0E0</color>
+    <color name="bg_light_gray">#FAFAFA</color>
+
+    <!-- 深色主题颜色 -->
+    <color name="bg_dark">#121212</color>
+    <color name="bg_dark_card">#1E1E1E</color>
+    <color name="bg_dark_divider">#2D2D2D</color>
+    <color name="text_dark_primary">#FFFFFF</color>
+    <color name="text_dark_secondary">#B0B0B0</color>
+
+    <!-- 图标颜色 -->
+    <color name="ic_launcher_background_color">#1B5E20</color>
+    <color name="ic_launcher_foreground_color">#FFFFFF</color>
+
+    <!-- 图表颜色 -->
+    <color name="chart_color_1">#2E7D32</color>
+    <color name="chart_color_2">#FF6F00</color>
+    <color name="chart_color_3">#2196F3</color>
+    <color name="chart_color_4">#9C27B0</color>
+    <color name="chart_color_5">#FF9800</color>
+    <color name="chart_color_6">#00BCD4</color>
+</resources>

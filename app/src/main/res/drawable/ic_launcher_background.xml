@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 绿色渐变背景（通过多个圆叠加模拟渐变） -->
+    <path
+        android:fillColor="#1B5E20"
+        android:pathData="M0,0 L108,0 L108,108 L0,108 Z" />
+
+    <!-- 渐变叠加层 -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M0,0 L108,0 L108,54 L0,108 Z" />
+
+    <!-- 高光层 -->
+    <path
+        android:fillColor="#388E3C"
+        android:pathData="M0,0 L54,0 L0,54 Z" />
+
+    <!-- 装饰圆点 -->
+    <path
+        android:fillColor="#43A047"
+        android:fillAlpha="0.3"
+        android:pathData="M90,20 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+
+    <path
+        android:fillColor="#66BB6A"
+        android:fillAlpha="0.2"
+        android:pathData="M18,90 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+</vector>

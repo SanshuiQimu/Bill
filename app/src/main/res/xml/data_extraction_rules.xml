@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <!-- 云备份规则：备份核心数据 -->
+    <cloud-backup>
+        <!-- 备份应用数据库 -->
+        <include domain="database" path="bill.db" />
+        <!-- 备份应用共享偏好设置 -->
+        <include domain="sharedpref" path="." />
+        <!-- 备份应用导出文件 -->
+        <include domain="file" path="exports/" />
+
+        <!-- 排除缓存与设备相关数据 -->
+        <exclude domain="database" path="cache.db" />
+        <exclude domain="sharedpref" path="device.xml" />
+        <exclude domain="sharedpref" path="temp.xml" />
+    </cloud-backup>
+
+    <!-- 设备迁移规则：迁移时包含的数据 -->
+    <device-transfer>
+        <!-- 迁移应用数据库 -->
+        <include domain="database" path="bill.db" />
+        <!-- 迁移应用共享偏好设置 -->
+        <include domain="sharedpref" path="." />
+        <!-- 迁移应用导出文件 -->
+        <include domain="file" path="exports/" />
+
+        <!-- 排除缓存数据 -->
+        <exclude domain="database" path="cache.db" />
+        <exclude domain="sharedpref" path="device.xml" />
+        <exclude domain="sharedpref" path="temp.xml" />
+        <exclude domain="cache" path="." />
+        <exclude domain="external-cache" path="." />
+    </device-transfer>
+</data-extraction-rules>

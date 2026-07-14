@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 钱包主体外框 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,32
+                          L78,32
+                          C81.866,32 85,35.134 85,39
+                          L85,73
+                          C85,76.866 81.866,80 78,80
+                          L30,80
+                          C26.134,80 23,76.866 23,73
+                          L23,39
+                          C23,35.134 26.134,32 30,32 Z" />
+
+    <!-- 钱包顶部翻盖 -->
+    <path
+        android:fillColor="#E8F5E9"
+        android:pathData="M30,32
+                          L70,32
+                          L70,28
+                          C70,25.791 68.209,24 66,24
+                          L34,24
+                          C31.791,24 30,25.791 30,28
+                          Z" />
+
+    <!-- 钱包卡扣 -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M75,50
+                          L82,50
+                          C83.105,50 84,50.895 84,52
+                          L84,60
+                          C84,61.105 83.105,62 82,62
+                          L75,62
+                          C72.791,62 71,60.209 71,58
+                          L71,54
+                          C71,51.791 72.791,50 75,50 Z" />
+
+    <!-- 钱币符号 ¥ -->
+    <path
+        android:fillColor="#2E7D32"
+        android:strokeColor="#2E7D32"
+        android:strokeWidth="0"
+        android:pathData="M48,44
+                          L52,52
+                          L56,44
+                          L60,44
+                          L54,55
+                          L58,55
+                          L58,58
+                          L54,58
+                          L54,61
+                          L58,61
+                          L58,64
+                          L54,64
+                          L54,70
+                          L50,70
+                          L50,64
+                          L46,64
+                          L46,61
+                          L50,61
+                          L50,58
+                          L46,58
+                          L46,55
+                          L50,55
+                          L44,44
+                          Z" />
+</vector>

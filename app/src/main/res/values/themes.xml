@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 亮色主题 -->
+    <style name="Theme.Bill" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- 主色调 -->
+        <item name="android:colorPrimary">@color/bill_primary</item>
+        <item name="android:colorPrimaryDark">@color/bill_primary_dark</item>
+        <item name="android:colorAccent">@color/bill_accent</item>
+
+        <!-- 窗口背景 -->
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:windowStatusBarColor">@android:color/transparent</item>
+
+        <!-- 状态栏与导航栏 -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/white</item>
+
+        <!-- 文本颜色 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+
+        <!-- 动画 -->
+        <item name="android:windowAnimationStyle">@android:style/Animation.Activity</item>
+    </style>
+
+    <!-- 启动页主题 -->
+    <style name="Theme.Bill.Splash" parent="Theme.Bill">
+        <item name="android:windowBackground">@color/bill_primary</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
+</resources>
