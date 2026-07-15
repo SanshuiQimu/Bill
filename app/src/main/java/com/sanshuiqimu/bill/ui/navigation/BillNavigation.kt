@@ -1,9 +1,14 @@
 package com.sanshuiqimu.bill.ui.navigation
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -12,8 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.sanshuiqimu.bill.ui.components.LiquidGlassDock
-import com.sanshuiqimu.bill.ui.components.getDockItems
+import com.sanshuiqimu.bill.ui.components.LiquidGlassDockWebView
 import com.sanshuiqimu.bill.ui.screens.add.AddTransactionScreen
 import com.sanshuiqimu.bill.ui.screens.home.HomeScreen
 import com.sanshuiqimu.bill.ui.screens.settings.SettingsScreen
@@ -65,8 +69,7 @@ private fun getDockIndex(route: String?): Int = when {
 /**
  * 主导航 Host
  *
- * 使用液态玻璃风格 Dock 替代传统底部导航栏。
- * Dock 包含 4 个标签：首页、记一笔、统计、设置。
+ * 内容全屏延伸（edge-to-edge），液态玻璃 Dock 悬浮覆盖在底部。
  * 在「记一笔」编辑页面隐藏 Dock。
  */
 @Composable
@@ -75,45 +78,21 @@ fun BillNavHost(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val dockItems = getDockItems()
 
     // 判断是否显示 Dock（AddTransaction 页面隐藏）
     val showDock = currentRoute?.startsWith("add_transaction") != true
 
-    Scaffold(
-        bottomBar = {
-            if (showDock) {
-                LiquidGlassDock(
-                    items = dockItems,
-                    selectedIndex = getDockIndex(currentRoute),
-                    onItemClick = { index ->
-                        when (index) {
-                            0 -> navController.navigate(Screen.Home.route) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                            1 -> navController.navigate(Screen.AddTransaction().route)
-                            2 -> navController.navigate(Screen.Stats.route) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                            3 -> navController.navigate(Screen.Settings.route) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    }
-                )
-            }
-        }
-    ) { innerPadding ->
+    // 防止 Dock 通知和导航控制器互相触发循环
+    var dockSyncIndex by remember { mutableStateOf(getDockIndex(currentRoute)) }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // === 内容区域：全屏延伸 ===
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.fillMaxSize()
         ) {
             // 首页
             composable(Screen.Home.route) {
@@ -160,6 +139,36 @@ fun BillNavHost(
             composable(Screen.CategoryManage.route) {
                 SettingsScreen()
             }
+        }
+
+        // === 悬浮 Dock：覆盖在内容底部 ===
+        if (showDock) {
+            LiquidGlassDockWebView(
+                selectedIndex = getDockIndex(currentRoute),
+                onItemSelected = { index ->
+                    when (index) {
+                        0 -> navController.navigate(Screen.Home.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                        1 -> navController.navigate(Screen.AddTransaction().route)
+                        2 -> navController.navigate(Screen.Stats.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                        3 -> navController.navigate(Screen.Settings.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+            )
         }
     }
 }

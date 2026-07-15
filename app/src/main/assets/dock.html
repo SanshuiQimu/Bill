@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Dock</title>
+  <style>
+    :root {
+      --fg-color: #000000;
+      --theme-color: rgb(4, 178, 133);
+      --dock-bg-rgb: 255, 255, 255;
+      --slider-tint-rgb: 0, 0, 0;
+      --inner-shadow-color: #ffffff;
+      --inner-shadow-blur: 20px;
+      --inner-shadow-spread: -5px;
+      --outer-shadow-blur: 24px;
+      --clipL: 4px;
+      --clipW: 79px;
+      --clipT: 3.5px;
+      --clipH: 48px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
+      color: var(--fg-color);
+      background: transparent;
+    }
+
+    .bottom-controls {
+      position: fixed;
+      left: calc(50% - 162px);
+      bottom: 24px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .dock-wrapper {
+      width: 324px;
+      height: 55px;
+      pointer-events: auto;
+    }
+
+    .dock-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-origin: center center;
+      pointer-events: auto;
+      --innerGlowOp: 0;
+      --edgeGlowOp: 0;
+      --glowRadius: 1;
+      touch-action: none;
+    }
+
+    .dock-shadow-layer {
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      left: 8px;
+      right: 8px;
+      z-index: 0;
+      pointer-events: none;
+      border-radius: 25px;
+      box-shadow:
+        0 16px 32px 2px rgba(0, 0, 0, 0.15),
+        0 4px 12px 1px rgba(0, 0, 0, 0.08);
+    }
+
+    .dock-base {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      overflow: hidden;
+      padding: 4px;
+      background: rgba(var(--dock-bg-rgb), 0.23);
+      transform: translateZ(0);
+      -webkit-mask-image: var(--mask-solid);
+      mask-image: var(--mask-solid);
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+      -webkit-backdrop-filter: url(#dock-glass-filter) saturate(1.5);
+      backdrop-filter: url(#dock-glass-filter) saturate(1.5);
+    }
+
+    .glow-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background: radial-gradient(
+        calc(100px * var(--glowRadius)) circle at var(--innerX, -999px) var(--innerY, -999px),
+        rgba(255, 255, 255, calc(0.5 * var(--innerGlowOp))) 0%,
+        rgba(255, 255, 255, calc(0.1 * var(--innerGlowOp))) 50%,
+        transparent 80%
+      );
+      -webkit-mask-image: var(--mask-solid);
+      mask-image: var(--mask-solid);
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+    }
+
+    .dock-base::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      background:
+        radial-gradient(
+          calc(120px * var(--glowRadius)) circle at var(--edgeX, -999px) var(--edgeY, -999px),
+          rgba(255, 255, 255, calc(0.7 * var(--edgeGlowOp))) 0%,
+          rgba(255, 255, 255, calc(0.15 * var(--edgeGlowOp))) 50%,
+          transparent 80%
+        ),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%),
+        linear-gradient(-35deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%);
+      mix-blend-mode: plus-lighter;
+      -webkit-mask-image: var(--mask-hollow);
+      mask-image: var(--mask-hollow);
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+    }
+
+    .ripple-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      overflow: hidden;
+      pointer-events: none;
+      -webkit-mask-image: var(--mask-solid);
+      mask-image: var(--mask-solid);
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+    }
+
+    .ripple-wave {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 1;
+      background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 60%);
+      transform: translate(-50%, -50%) scale(0);
+      animation: ripple-anim 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes ripple-anim {
+      to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2.2);
+      }
+    }
+
+    .dock-items-wrap,
+    .dock-active-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 998;
+    }
+
+    .dock-items-wrap {
+      color: var(--fg-color);
+      touch-action: none;
+      -webkit-mask-image: linear-gradient(#000, #000), var(--slider-mask-solid);
+      mask-image: linear-gradient(#000, #000), var(--slider-mask-solid);
+      -webkit-mask-size: 100% 100%, var(--clipW) var(--clipH);
+      mask-size: 100% 100%, var(--clipW) var(--clipH);
+      -webkit-mask-position: 0 0, var(--clipL) var(--clipT);
+      mask-position: 0 0, var(--clipL) var(--clipT);
+      -webkit-mask-repeat: no-repeat, no-repeat;
+      mask-repeat: no-repeat, no-repeat;
+      -webkit-mask-composite: destination-out;
+      mask-composite: exclude;
+    }
+
+    .dock-item {
+      position: absolute;
+      top: 3.5px;
+      width: 81.5px;
+      height: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: inherit;
+      cursor: pointer;
+      z-index: 3;
+      transform-origin: center center;
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .dock-item:nth-child(1) { left: 3px; }
+    .dock-item:nth-child(2) { left: 83px; }
+    .dock-item:nth-child(3) { left: 162px; }
+    .dock-item:nth-child(4) { left: 242px; }
+
+    .dock-item svg {
+      width: 25px;
+      height: 25px;
+    }
+
+    .dock-item span {
+      margin-top: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .dock-active-layer {
+      color: var(--theme-color);
+      opacity: 1;
+      pointer-events: none;
+      -webkit-mask-image: var(--slider-mask-solid);
+      mask-image: var(--slider-mask-solid);
+      -webkit-mask-size: var(--clipW) var(--clipH);
+      mask-size: var(--clipW) var(--clipH);
+      -webkit-mask-position: var(--clipL) var(--clipT);
+      mask-position: var(--clipL) var(--clipT);
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+    }
+
+    .dock-container.expanding .dock-active-layer .dock-item {
+      transform: scale(1.1);
+    }
+
+    #frosted-slider {
+      position: absolute;
+      top: 3.5px;
+      left: 4px;
+      width: 79px;
+      height: 48px;
+      z-index: 999;
+      overflow: hidden;
+      opacity: 1;
+      pointer-events: auto;
+      touch-action: none;
+      background-color: rgba(var(--slider-tint-rgb), 0.15);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transform: translateZ(0);
+      -webkit-mask-image: var(--slider-mask-solid);
+      mask-image: var(--slider-mask-solid);
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+      -webkit-backdrop-filter: url(#liquid-glass-dispersion-filter);
+      backdrop-filter: url(#liquid-glass-dispersion-filter);
+      transition: background-color 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    #frosted-slider.expanding {
+      background-color: rgba(var(--slider-tint-rgb), 0.06);
+      box-shadow:
+        inset 0 0 var(--inner-shadow-blur) var(--inner-shadow-spread) var(--inner-shadow-color),
+        0 2px var(--outer-shadow-blur) rgba(0,0,0,0.2);
+    }
+
+    #frosted-slider::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, transparent 50%),
+        linear-gradient(-35deg, rgba(255, 255, 255, 0.9) 0%, transparent 50%);
+      mix-blend-mode: plus-lighter;
+      -webkit-mask-image: var(--slider-mask-hollow);
+      mask-image: var(--slider-mask-hollow);
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+      transition: opacity 0.4s ease;
+    }
+
+    #frosted-slider.expanding::after {
+      opacity: 1;
+    }
+
+    @media (max-width: 430px) {
+      .bottom-controls {
+        bottom: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;pointer-events:none" color-interpolation-filters="sRGB">
+    <defs id="svg-defs"></defs>
+  </svg>
+
+  <nav class="bottom-controls" aria-label="底部状态栏">
+    <div class="dock-wrapper" id="dock-wrapper">
+      <div class="dock-container" id="dock-root">
+        <div class="dock-shadow-layer"></div>
+        <div class="dock-base"><div class="glow-layer"></div></div>
+        <div class="ripple-layer"></div>
+
+        <div class="dock-items-wrap">
+          <div class="dock-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 3 9 v -1 a 2 2 0 0 1 2 -2 h 14 a 2 2 0 0 1 2 2 v 1 z"></path>
+              <path d="M 3 11 v 5 a 2 2 0 0 0 2 2 h 14 a 2 2 0 0 0 2 -2 v -5 z"></path>
+            </svg><span>首页</span>
+          </div>
+          <div class="dock-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 10.5 10 C 10.5 4, 3 5, 6.5 10 Z"></path>
+              <path d="M 13.5 10 C 13.5 4, 21 5, 17.5 10 Z"></path>
+              <rect x="4" y="10" width="6.5" height="3" rx="0.5"></rect>
+              <rect x="13.5" y="10" width="6.5" height="3" rx="0.5"></rect>
+              <path d="M 5 13 h 5.5 v 6.5 a 0.5 0.5 0 0 1 -0.5 0.5 h -4.5 a 0.5 0.5 0 0 1 -0.5 -0.5 z"></path>
+              <path d="M 13.5 13 h 5.5 v 6.5 a 0.5 0.5 0 0 1 -0.5 0.5 h -4.5 a 0.5 0.5 0 0 1 -0.5 -0.5 z"></path>
+            </svg><span>记一笔</span>
+          </div>
+          <div class="dock-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 5 9 h 14 v 9 a 2 2 0 0 1 -2 2 h -10 a 2 2 0 0 1 -2 -2 z"></path>
+              <path d="M 8 9 v -3 a 4 4 0 0 1 8 0 v 3"></path>
+            </svg><span>统计</span>
+          </div>
+          <div class="dock-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg><span>设置</span>
+          </div>
+        </div>
+
+        <div id="frosted-slider"></div>
+
+        <div class="dock-active-layer" id="active-mask">
+          <div class="dock-item">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 3 9 v -1 a 2 2 0 0 1 2 -2 h 14 a 2 2 0 0 1 2 2 v 1 z"></path>
+              <path d="M 3 11 v 5 a 2 2 0 0 0 2 2 h 14 a 2 2 0 0 0 2 -2 v -5 z"></path>
+            </svg><span>首页</span>
+          </div>
+          <div class="dock-item">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 10.5 10 C 10.5 4, 3 5, 6.5 10 Z"></path>
+              <path d="M 13.5 10 C 13.5 4, 21 5, 17.5 10 Z"></path>
+              <rect x="4" y="10" width="6.5" height="3" rx="0.5"></rect>
+              <rect x="13.5" y="10" width="6.5" height="3" rx="0.5"></rect>
+              <path d="M 5 13 h 5.5 v 6.5 a 0.5 0.5 0 0 1 -0.5 0.5 h -4.5 a 0.5 0.5 0 0 1 -0.5 -0.5 z"></path>
+              <path d="M 13.5 13 h 5.5 v 6.5 a 0.5 0.5 0 0 1 -0.5 0.5 h -4.5 a 0.5 0.5 0 0 1 -0.5 -0.5 z"></path>
+            </svg><span>记一笔</span>
+          </div>
+          <div class="dock-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path fill="currentColor" d="M 5 9 h 14 v 9 a 2 2 0 0 1 -2 2 h -10 a 2 2 0 0 1 -2 -2 z"></path>
+              <path fill="none" d="M 8 9 v -3 a 4 4 0 0 1 8 0 v 3"></path>
+            </svg><span>统计</span>
+          </div>
+          <div class="dock-item">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg><span>设置</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <script>
+    /* ===== G2 连续曲率路径 ===== */
+    function generateG2PillPathStr(w, h, offsetX = 0, offsetY = 0, tRatio = 0.45) {
+      const r = h / 2;
+      const t = Math.max(0, Math.min(r * tRatio, w / 2 - r));
+      return `M ${w / 2 + offsetX} ${offsetY} L ${w - r - t + offsetX} ${offsetY} C ${w - r - t * 0.5 + offsetX} ${offsetY}, ${w - r + offsetX} ${offsetY}, ${w - r + r * 0.15 + offsetX} ${r * 0.03 + offsetY} C ${w - r + r * 0.6 + offsetX} ${r * 0.08 + offsetY}, ${w + offsetX} ${r * 0.45 + offsetY}, ${w + offsetX} ${r + offsetY} C ${w + offsetX} ${h - r * 0.45 + offsetY}, ${w - r + r * 0.6 + offsetX} ${h - r * 0.08 + offsetY}, ${w - r + r * 0.15 + offsetX} ${h - r * 0.03 + offsetY} C ${w - r + offsetX} ${h + offsetY}, ${w - r - t * 0.5 + offsetX} ${h + offsetY}, ${w - r - t + offsetX} ${h + offsetY} L ${r + t + offsetX} ${h + offsetY} C ${r + t * 0.5 + offsetX} ${h + offsetY}, ${r + offsetX} ${h + offsetY}, ${r - r * 0.15 + offsetX} ${h - r * 0.03 + offsetY} C ${r - r * 0.6 + offsetX} ${h - r * 0.08 + offsetY}, ${offsetX} ${h - r * 0.45 + offsetY}, ${offsetX} ${r + offsetY} C ${offsetX} ${r * 0.45 + offsetY}, ${r - r * 0.6 + offsetX} ${r * 0.08 + offsetY}, ${r - r * 0.15 + offsetX} ${r * 0.03 + offsetY} C ${r + offsetX} ${offsetY}, ${r + t * 0.5 + offsetX} ${offsetY}, ${r + t + offsetX} ${offsetY} Z`;
+    }
+
+    function getSolidPillMask(w, h) {
+      const PR = 4;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w * PR}" height="${h * PR}" viewBox="-1 -1 ${w * PR + 2} ${h * PR + 2}" preserveAspectRatio="none"><path d="${generateG2PillPathStr(w * PR, h * PR)}" fill="black"/></svg>`;
+      return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+    }
+
+    function getHollowPillMask(w, h, b) {
+      const PR = 4;
+      const insetW = w * PR - b * PR;
+      const insetH = h * PR - b * PR;
+      const off = (b * PR) / 2;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w * PR}" height="${h * PR}" viewBox="-1 -1 ${w * PR + 2} ${h * PR + 2}" preserveAspectRatio="none"><path d="${generateG2PillPathStr(insetW, insetH, off, off)}" fill="none" stroke="black" stroke-width="${b * PR}"/></svg>`;
+      return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+    }
+
+    document.documentElement.style.setProperty("--slider-mask-solid", getSolidPillMask(79, 48));
+    document.documentElement.style.setProperty("--slider-mask-hollow", getHollowPillMask(79, 48, 1.2));
+    document.getElementById("dock-wrapper").style.setProperty("--mask-solid", getSolidPillMask(324, 55));
+    document.getElementById("dock-wrapper").style.setProperty("--mask-hollow", getHollowPillMask(324, 55, 1.5));
+
+    /* ===== 位移贴图 + 高光贴图 ===== */
+    let targetGlassScale = 0;
+    let targetGlassSpec = 0;
+    let currentFilterScale = 0;
+    let currentFilterSpec = 0;
+
+    const LIQUID_CONFIG = {
+      surfaceShape: "convex_squircle",
+      bezelWidth: 40,
+      ior: 2.0,
+      scaleRatio: 0.8,
+      specularOpacity: 0.5,
+      specularSaturation: 4,
+      sliderThickness: 1.0,
+      sliderBlur: 0,
+      dockThickness: 5.0,
+      dockBlur: 2,
+      sliderDispR: 0.99,
+      sliderDispB: 1.35,
+      dockDispR: 0.92,
+      dockDispB: 1.08,
+      sliderBaseZoom: 0.66
+    };
+
+    const SURFACE_FNS = {
+      convex_squircle: (x) => Math.pow(1 - Math.pow(1 - x, 4), 0.25)
+    };
+
+    function calculateRefractionProfile(glassThickness, bezelWidth, heightFn, ior, samples = 128) {
+      const eta = 1 / ior;
+      function refract(nx, ny) {
+        const dot = ny;
+        const k = 1 - eta * eta * (1 - dot * dot);
+        if (k < 0) return null;
+        const sq = Math.sqrt(k);
+        return [-(eta * dot + sq) * nx, eta - (eta * dot + sq) * ny];
+      }
+      const profile = new Float64Array(samples);
+      for (let i = 0; i < samples; i++) {
+        const x = i / samples;
+        const y = heightFn(x);
+        const dx = x < 1 ? 0.0001 : -0.0001;
+        const y2 = heightFn(x + dx);
+        const deriv = (y2 - y) / dx;
+        const mag = Math.sqrt(deriv * deriv + 1);
+        const ref = refract(-deriv / mag, -1 / mag);
+        profile[i] = ref ? ref[0] * ((y * bezelWidth + glassThickness) / ref[1]) : 0;
+      }
+      return profile;
+    }
+
+    function generateDisplacementMap(w, h, radius, bezelWidth, profile, baseZoom = 1.0) {
+      let localMax = 0;
+      const S = profile.length;
+      for (let d = 0; d <= radius + 5; d += 0.5) {
+        const fromSide = radius - d;
+        const bi = Math.max(0, Math.min(((fromSide / bezelWidth) * S) | 0, S - 1));
+        const disp = profile[bi] || 0;
+        const zoomDisp = d * (1 / baseZoom - 1);
+        const netDispOutward = zoomDisp - disp;
+        if (Math.abs(netDispOutward) > localMax) localMax = Math.abs(netDispOutward);
+      }
+      if (localMax === 0) localMax = 1;
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const ctx = c.getContext("2d");
+      const img = ctx.createImageData(w, h);
+      const data = img.data;
+      for (let i = 0; i < data.length; i += 4) { data[i] = 128; data[i+1] = 128; data[i+2] = 0; data[i+3] = 255; }
+      const aaBand = 2.5;
+      const cx = w / 2, cy = h / 2, maxRadius = cy, flatW = Math.max(0, w - h);
+      for (let y1 = 0; y1 < h; y1++) {
+        for (let x1 = 0; x1 < w; x1++) {
+          const closestX = Math.max(cx - flatW/2, Math.min(cx + flatW/2, x1));
+          const closestY = cy;
+          const vecX = x1 - closestX, vecY = y1 - closestY;
+          const dist = Math.sqrt(vecX*vecX + vecY*vecY);
+          if (dist > maxRadius + aaBand || dist === 0) continue;
+          const fromSide = maxRadius - dist;
+          const op = dist < maxRadius ? 1 : Math.max(0, 1 - (dist - maxRadius) / aaBand);
+          if (op <= 0) continue;
+          const dirX = vecX / dist, dirY = vecY / dist;
+          const bi = Math.max(0, Math.min(((fromSide / bezelWidth) * S) | 0, S - 1));
+          const disp = profile[bi] || 0;
+          const zoomDisp = dist * (1 / baseZoom - 1);
+          const netDispOutward = zoomDisp - disp;
+          const dX = (dirX * netDispOutward) / localMax;
+          const dY = (dirY * netDispOutward) / localMax;
+          const idx = (y1 * w + x1) * 4;
+          data[idx] = (128 + dX * 127 * op + 0.5) | 0;
+          data[idx + 1] = (128 + dY * 127 * op + 0.5) | 0;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return { url: c.toDataURL(), maxDisp: localMax };
+    }
+
+    function generateSpecularMap(w, h, radius, bezelWidth, angle = Math.PI / 3) {
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const ctx = c.getContext("2d");
+      const img = ctx.createImageData(w, h);
+      const data = img.data;
+      data.fill(0);
+      const aaBand = 2.5;
+      const sv = [Math.cos(angle), Math.sin(angle)];
+      const cx = w / 2, cy = h / 2, maxRadius = cy, flatW = Math.max(0, w - h);
+      for (let y1 = 0; y1 < h; y1++) {
+        for (let x1 = 0; x1 < w; x1++) {
+          const closestX = Math.max(cx - flatW/2, Math.min(cx + flatW/2, x1));
+          const closestY = cy;
+          const vecX = x1 - closestX, vecY = y1 - closestY;
+          const dist = Math.sqrt(vecX*vecX + vecY*vecY);
+          if (dist > maxRadius + aaBand || dist === 0) continue;
+          const fromSide = maxRadius - dist;
+          const op = dist < maxRadius ? 1 : Math.max(0, 1 - (dist - maxRadius) / aaBand);
+          if (op <= 0) continue;
+          const dirX = vecX / dist, dirY = vecY / dist;
+          const dot = Math.abs(dirX * sv[0] + (-dirY) * sv[1]);
+          const edge = Math.sqrt(Math.max(0, 1 - (1 - fromSide) ** 2));
+          const coeff = dot * edge;
+          const col = (255 * coeff) | 0;
+          const alpha = (col * coeff * op) | 0;
+          const idx = (y1 * w + x1) * 4;
+          data[idx] = col; data[idx+1] = col; data[idx+2] = col; data[idx+3] = alpha;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return c.toDataURL();
+    }
+
+    function initLiquidGlass() {
+      const defs = document.getElementById("svg-defs");
+      defs.innerHTML = "";
+      function buildFilter(id, w, h, prefix, isDynamic, thicknessVal, blurAmt, hasDispersion, dispR = 1, dispB = 1, baseZoom = 1) {
+        const PR = w > 100 ? 1 : 2;
+        const cW = w * PR, cH = h * PR;
+        const cRadius = (h / 2) * PR;
+        const glassThick = thicknessVal * PR;
+        const bezelW = LIQUID_CONFIG.bezelWidth * PR;
+        const clampedBezel = Math.min(bezelW, cRadius - PR, Math.min(cW, cH) / 2 - PR);
+        const heightFn = SURFACE_FNS[LIQUID_CONFIG.surfaceShape];
+        const profile = calculateRefractionProfile(glassThick, clampedBezel, heightFn, LIQUID_CONFIG.ior, 128);
+        const dispData = generateDisplacementMap(cW, cH, cRadius, clampedBezel, profile, baseZoom);
+        const specUrl = generateSpecularMap(cW, cH, cRadius, clampedBezel * 2.5);
+        let scaleVal = (dispData.maxDisp / PR) * LIQUID_CONFIG.scaleRatio;
+        let slopeVal = LIQUID_CONFIG.specularOpacity;
+        if (isDynamic) { targetGlassScale = scaleVal; targetGlassSpec = slopeVal; scaleVal = 0; slopeVal = 0; }
+        const filterHTML = hasDispersion
+          ? `<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%" primitiveUnits="userSpaceOnUse">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="${blurAmt}" result="blurred_source" />
+              <feImage href="${dispData.url}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="disp_map" />
+              <feColorMatrix in="blurred_source" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="red_c" />
+              <feColorMatrix in="blurred_source" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="green_c" />
+              <feColorMatrix in="blurred_source" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blue_c" />
+              <feDisplacementMap id="${prefix}-disp-R" in="red_c" in2="disp_map" scale="${scaleVal * dispR}" xChannelSelector="R" yChannelSelector="G" result="disp_red" />
+              <feDisplacementMap id="${prefix}-disp-G" in="green_c" in2="disp_map" scale="${scaleVal}" xChannelSelector="R" yChannelSelector="G" result="disp_green" />
+              <feDisplacementMap id="${prefix}-disp-B" in="blue_c" in2="disp_map" scale="${scaleVal * dispB}" xChannelSelector="R" yChannelSelector="G" result="disp_blue" />
+              <feBlend mode="screen" in="disp_red" in2="disp_green" result="rg" />
+              <feBlend mode="screen" in="rg" in2="disp_blue" result="displaced" />
+              <feColorMatrix in="displaced" type="saturate" values="${LIQUID_CONFIG.specularSaturation}" result="displaced_sat" />
+              <feImage href="${specUrl}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="spec_layer" />
+              <feComposite in="displaced_sat" in2="spec_layer" operator="in" result="spec_masked" />
+              <feComponentTransfer in="spec_layer" result="spec_faded"><feFuncA id="${prefix}-spec" type="linear" slope="${slopeVal}" /></feComponentTransfer>
+              <feBlend in="spec_masked" in2="displaced" mode="normal" result="with_sat" />
+              <feBlend in="spec_faded" in2="with_sat" mode="normal" />
+            </filter>`
+          : `<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%" primitiveUnits="userSpaceOnUse">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="${blurAmt}" result="blurred_source" />
+              <feImage href="${dispData.url}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="disp_map" />
+              <feDisplacementMap id="${prefix}-disp" in="blurred_source" in2="disp_map" scale="${scaleVal}" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+              <feColorMatrix in="displaced" type="saturate" values="${LIQUID_CONFIG.specularSaturation}" result="displaced_sat" />
+              <feImage href="${specUrl}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="spec_layer" />
+              <feComposite in="displaced_sat" in2="spec_layer" operator="in" result="spec_masked" />
+              <feComponentTransfer in="spec_layer" result="spec_faded"><feFuncA id="${prefix}-spec" type="linear" slope="${slopeVal}" /></feComponentTransfer>
+              <feBlend in="spec_masked" in2="displaced" mode="normal" result="with_sat" />
+              <feBlend in="spec_faded" in2="with_sat" mode="normal" />
+            </filter>`;
+        defs.insertAdjacentHTML("beforeend", filterHTML);
+      }
+      buildFilter("liquid-glass-dispersion-filter", 79, 48, "glass", true, LIQUID_CONFIG.sliderThickness, LIQUID_CONFIG.sliderBlur, true, LIQUID_CONFIG.sliderDispR, LIQUID_CONFIG.sliderDispB, LIQUID_CONFIG.sliderBaseZoom);
+      buildFilter("dock-glass-filter", 324, 55, "dock", false, LIQUID_CONFIG.dockThickness, LIQUID_CONFIG.dockBlur, true, LIQUID_CONFIG.dockDispR, LIQUID_CONFIG.dockDispB, 1);
+    }
+
+    initLiquidGlass();
+
+    /* ===== Dock 交互 ===== */
+    const SOFT_K = 0.045, SOFT_D = 0.84, JELLY_K = 0.01, JELLY_D = 0.95;
+    const TARGET_POSITIONS = [4, 83, 162, 241];
+    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+    const rubberBand = (distance, limit) => (distance * 0.05 * limit) / (Math.abs(distance * 0.05) + limit);
+
+    const dockWrapper = document.getElementById("dock-wrapper");
+    const dockRoot = document.getElementById("dock-root");
+    const slider = document.getElementById("frosted-slider");
+
+    let globalPtrX = -999, globalPtrY = -999;
+    let currentActiveIndex = 0;
+    let dockPressed = false, isDragging = false, isExpanding = false;
+    let isAutoAnimating = false, isSnapping = false;
+    let targetX = TARGET_POSITIONS[0], currentX = TARGET_POSITIONS[0], lastX = TARGET_POSITIONS[0];
+    let vel = 0, touchOffsetX = 0;
+    let pointerStartXSlider = 0, pointerStartYSlider = 0;
+    let sliderHasMoved = false, wasDragging = false;
+    let dockTargetShiftX = 0, dockCurrentShiftX = 0;
+    let dockTargetShiftY = 0, dockCurrentShiftY = 0;
+    let dockPressStartX = 0, dockPressStartY = 0;
+    let dockBaseScale = 1, sliderBaseScale = 1, sliderScaleVel = 0;
+    let dockInnerOp = 0, globalEdgeOp = 0, currentGlowRadius = 1;
+    let currentSX = 1, currentSY = 1, sxVel = 0, syVel = 0;
+    let curDispR = LIQUID_CONFIG.sliderDispR, curDispB = LIQUID_CONFIG.sliderDispB;
+    let mainGlassNodes = null;
+    let lastTime = performance.now();
+
+    function setExpanding(val) {
+      isExpanding = val;
+      slider.classList.toggle("expanding", val);
+      dockRoot.classList.toggle("expanding", val);
+    }
+
+    function setActiveIndex(idx) {
+      currentActiveIndex = idx;
+      document.documentElement.style.setProperty("--theme-color", ["rgb(4,178,133)", "rgb(255,55,95)", "rgb(10,132,255)", "rgb(255,159,10)"][idx]);
+    }
+
+    /* Android 回调：通知选中项变化 */
+    function notifyAndroid(idx) {
+      try {
+        AndroidDock.onDockItemSelected(idx);
+      } catch(e) {}
+    }
+
+    function physLoop(time) {
+      let dt = time - lastTime;
+      lastTime = time;
+      if (dt > 50) dt = 16.66;
+      if (!mainGlassNodes && document.getElementById("glass-disp-R")) {
+        mainGlassNodes = {
+          r: document.getElementById("glass-disp-R"),
+          g: document.getElementById("glass-disp-G"),
+          b: document.getElementById("glass-disp-B"),
+          spec: document.getElementById("glass-spec")
+        };
+      }
+      const dist = Math.abs(targetX - currentX);
+      const lerpFactor = isAutoAnimating ? 0.13 : (isDragging ? 0.25 : 0.08);
+      currentX += (targetX - currentX) * lerpFactor;
+      if (Math.abs(targetX - currentX) < 0.01) currentX = targetX;
+      slider.style.left = `${currentX}px`;
+      vel = currentX - lastX;
+      lastX = currentX;
+      let targetSX = 1, targetSY = 1;
+      const absVel = Math.abs(vel);
+      const majorDeform = Math.min(absVel * 0.04, 0.15);
+      const minorDeform = Math.min(absVel * 0.04, 0.08);
+      if (vel < -0.5) { targetSX = 1 - majorDeform; targetSY = 1 + minorDeform; }
+      else if (vel > 0.5) { targetSX = 1 + minorDeform; targetSY = 1 - majorDeform; }
+      sxVel += (targetSX - currentSX) * JELLY_K;
+      syVel += (targetSY - currentSY) * JELLY_K;
+      sxVel *= JELLY_D; syVel *= JELLY_D;
+      currentSX += sxVel; currentSY += syVel;
+      if (absVel < 0.1 && Math.abs(currentSX - 1) < 0.005 && Math.abs(sxVel) < 0.005) { currentSX = 1; sxVel = 0; }
+      if (absVel < 0.1 && Math.abs(currentSY - 1) < 0.005 && Math.abs(syVel) < 0.005) { currentSY = 1; syVel = 0; }
+      const targetSliderScale = isExpanding ? 1.35 : 1;
+      sliderScaleVel += (targetSliderScale - sliderBaseScale) * SOFT_K;
+      sliderScaleVel *= SOFT_D;
+      sliderBaseScale += sliderScaleVel;
+      if (Math.abs(sliderBaseScale - targetSliderScale) < 0.002 && Math.abs(sliderScaleVel) < 0.002) { sliderBaseScale = targetSliderScale; sliderScaleVel = 0; }
+      slider.style.transform = `scale(${currentSX * sliderBaseScale}, ${currentSY * sliderBaseScale}) translateZ(0)`;
+      const vW = 79 * currentSX * sliderBaseScale;
+      const vH = 48 * currentSY * sliderBaseScale;
+      const vL = currentX - (vW - 79) / 2;
+      const vT = 3.5 - (vH - 48) / 2;
+      document.documentElement.style.setProperty("--clipL", `${vL}px`);
+      document.documentElement.style.setProperty("--clipW", `${vW}px`);
+      document.documentElement.style.setProperty("--clipT", `${vT}px`);
+      document.documentElement.style.setProperty("--clipH", `${vH}px`);
+      if (isAutoAnimating || isSnapping) {
+        if (isExpanding && ((isAutoAnimating && dist <= 8) || (isSnapping && dist <= 10))) setExpanding(false);
+        if (isExpanding) { dockTargetShiftX = rubberBand(currentX - targetX, 4); dockTargetShiftY = 0; }
+        else if (!dockPressed) { dockTargetShiftX = 0; }
+        if (dist < 0.01 && absVel < 0.01 && !isExpanding) { isAutoAnimating = false; isSnapping = false; }
+      }
+      const targetDockScale = isExpanding ? 1.05 : 1;
+      dockBaseScale += (targetDockScale - dockBaseScale) * ((isAutoAnimating || isSnapping) ? 0.08 : 0.15);
+      if (Math.abs(dockBaseScale - targetDockScale) < 0.001) dockBaseScale = targetDockScale;
+      dockCurrentShiftX += (dockTargetShiftX - dockCurrentShiftX) * 0.15;
+      dockCurrentShiftY += (dockTargetShiftY - dockCurrentShiftY) * 0.15;
+      if (Math.abs(dockCurrentShiftX - dockTargetShiftX) < 0.01) dockCurrentShiftX = dockTargetShiftX;
+      if (Math.abs(dockCurrentShiftY - dockTargetShiftY) < 0.01) dockCurrentShiftY = dockTargetShiftY;
+      dockRoot.style.transform = `translate(${dockCurrentShiftX}px, ${dockCurrentShiftY}px) scale(${dockBaseScale})`;
+      if (mainGlassNodes && mainGlassNodes.r) {
+        const tFilterScale = isExpanding ? targetGlassScale : 0;
+        const tFilterSpec = isExpanding ? targetGlassSpec : 0;
+        const targetDispR = isExpanding ? 0.95 : LIQUID_CONFIG.sliderDispR;
+        const targetDispB = isExpanding ? 1.05 : LIQUID_CONFIG.sliderDispB;
+        curDispR += (targetDispR - curDispR) * 0.15;
+        curDispB += (targetDispB - curDispB) * 0.15;
+        currentFilterScale += (tFilterScale - currentFilterScale) * 0.15;
+        currentFilterSpec += (tFilterSpec - currentFilterSpec) * 0.15;
+        mainGlassNodes.r.setAttribute("scale", (currentFilterScale * curDispR).toFixed(2));
+        mainGlassNodes.g.setAttribute("scale", currentFilterScale.toFixed(2));
+        mainGlassNodes.b.setAttribute("scale", (currentFilterScale * curDispB).toFixed(2));
+        mainGlassNodes.spec.setAttribute("slope", currentFilterSpec.toFixed(2));
+      }
+      const dockRect = dockRoot.getBoundingClientRect();
+      const targetDockInner = (isDragging || dockPressed) ? 1 : 0;
+      dockInnerOp += (targetDockInner - dockInnerOp) * 0.15;
+      globalEdgeOp += (targetDockInner - globalEdgeOp) * 0.15;
+      currentGlowRadius += ((targetDockInner ? 1 : 1.3) - currentGlowRadius) * 0.1;
+      dockRoot.style.setProperty("--innerGlowOp", dockInnerOp.toFixed(3));
+      dockRoot.style.setProperty("--edgeGlowOp", globalEdgeOp.toFixed(3));
+      dockRoot.style.setProperty("--glowRadius", currentGlowRadius.toFixed(3));
+      dockRoot.style.setProperty("--innerX", `${clamp(globalPtrX - dockRect.left, 0, dockRect.width)}px`);
+      dockRoot.style.setProperty("--innerY", `${clamp(globalPtrY - dockRect.top, 0, dockRect.height)}px`);
+      dockRoot.style.setProperty("--edgeX", `${(targetDockInner ? dockRect.left + clamp(globalPtrX - dockRect.left, 0, dockRect.width) : globalPtrX) - dockRect.left}px`);
+      dockRoot.style.setProperty("--edgeY", `${(targetDockInner ? dockRect.top + clamp(globalPtrY - dockRect.top, 0, dockRect.height) : globalPtrY) - dockRect.top}px`);
+      requestAnimationFrame(physLoop);
+    }
+
+    requestAnimationFrame(physLoop);
+
+    window.addEventListener("pointerdown", (e) => { globalPtrX = e.clientX; globalPtrY = e.clientY; }, { capture: true });
+    window.addEventListener("pointermove", (e) => {
+      globalPtrX = e.clientX; globalPtrY = e.clientY;
+      if (isDragging && !isAutoAnimating && !isSnapping) {
+        if (Math.abs(globalPtrX - pointerStartXSlider) > 5) sliderHasMoved = true;
+        const dx = globalPtrX - pointerStartXSlider;
+        targetX = clamp(touchOffsetX + dx, TARGET_POSITIONS[0], TARGET_POSITIONS[3]);
+        dockTargetShiftX = rubberBand(dx, 4);
+        dockTargetShiftY = rubberBand(globalPtrY - pointerStartYSlider, 4);
+      } else if (dockPressed && !isDragging) {
+        dockTargetShiftX = rubberBand(globalPtrX - dockPressStartX, 4);
+        dockTargetShiftY = rubberBand(globalPtrY - dockPressStartY, 4);
+      }
+    });
+
+    function handleGlobalUp() {
+      if (dockPressed) {
+        const rippleLayer = document.querySelector(".ripple-layer");
+        const r = document.createElement("div");
+        const rect = dockRoot.getBoundingClientRect();
+        r.className = "ripple-wave";
+        r.style.left = `${globalPtrX - rect.left}px`;
+        r.style.top = `${globalPtrY - rect.top}px`;
+        rippleLayer.appendChild(r);
+        setTimeout(() => r.remove(), 600);
+      }
+      if (dockPressed) { dockPressed = false; if (!isDragging) { dockTargetShiftX = 0; dockTargetShiftY = 0; } }
+      if (isDragging && !isAutoAnimating) {
+        isDragging = false;
+        dockTargetShiftX = 0; dockTargetShiftY = 0;
+        if (sliderHasMoved) { wasDragging = true; setTimeout(() => { wasDragging = false; }, 50); }
+        const inertia = Math.max(-80, Math.min(80, vel * 6));
+        const centerPos = currentX + inertia + 39.5;
+        const idx = centerPos < 83 ? 0 : centerPos < 162 ? 1 : centerPos < 241 ? 2 : 3;
+        targetX = TARGET_POSITIONS[idx];
+        isSnapping = true;
+        setActiveIndex(idx);
+        notifyAndroid(idx);
+        if (!sliderHasMoved) setExpanding(false);
+      }
+    }
+
+    window.addEventListener("pointerup", handleGlobalUp);
+    window.addEventListener("pointercancel", handleGlobalUp);
+
+    dockRoot.addEventListener("pointerdown", (e) => {
+      dockPressed = true;
+      dockPressStartX = e.clientX; dockPressStartY = e.clientY;
+      const rect = dockRoot.getBoundingClientRect();
+      const relativeX = e.clientX - rect.left;
+      if (relativeX >= currentX - 5 && relativeX <= currentX + 84) {
+        isAutoAnimating = false; isSnapping = false; sliderHasMoved = false;
+        pointerStartXSlider = e.clientX; pointerStartYSlider = e.clientY;
+        dockTargetShiftX = 0; dockTargetShiftY = 0;
+        isDragging = true; setExpanding(true); touchOffsetX = currentX;
+      }
+    });
+
+    document.querySelectorAll(".dock-items-wrap .dock-item").forEach((item, i) => {
+      item.addEventListener("click", (e) => {
+        if (wasDragging || isDragging) { e.preventDefault(); return; }
+        if (Math.abs(targetX - TARGET_POSITIONS[i]) < 1) return;
+        isSnapping = false;
+        targetX = TARGET_POSITIONS[i];
+        isAutoAnimating = true;
+        setExpanding(true);
+        setActiveIndex(i);
+        notifyAndroid(i);
+      });
+    });
+
+    /* Android 调用：设置选中项（不带回调） */
+    window.setDockIndex = function(idx) {
+      if (idx < 0 || idx > 3) return;
+      if (Math.abs(targetX - TARGET_POSITIONS[idx]) < 1 && currentActiveIndex === idx) return;
+      isSnapping = false;
+      targetX = TARGET_POSITIONS[idx];
+      isAutoAnimating = true;
+      setExpanding(true);
+      setActiveIndex(idx);
+    };
+  </script>
+</body>
+</html>

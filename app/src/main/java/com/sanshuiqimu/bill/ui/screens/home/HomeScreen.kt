@@ -80,7 +80,12 @@ fun HomeScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = innerPadding,
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                top = innerPadding.calculateTopPadding(),
+                bottom = innerPadding.calculateBottomPadding() + 100.dp,
+                start = 0.dp,
+                end = 0.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // 收支总览卡片
