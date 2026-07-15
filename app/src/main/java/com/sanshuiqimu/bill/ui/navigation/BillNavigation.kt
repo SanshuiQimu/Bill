@@ -2,11 +2,14 @@ package com.sanshuiqimu.bill.ui.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -14,8 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.sanshuiqimu.bill.ui.components.LiquidGlassDock
-import com.sanshuiqimu.bill.ui.components.getDockItems
+import com.sanshuiqimu.bill.ui.components.LiquidGlassDockWebView
 import com.sanshuiqimu.bill.ui.screens.add.AddTransactionScreen
 import com.sanshuiqimu.bill.ui.screens.home.HomeScreen
 import com.sanshuiqimu.bill.ui.screens.settings.SettingsScreen
@@ -25,11 +27,7 @@ import com.sanshuiqimu.bill.ui.screens.stats.StatsScreen
  * 页面路由定义
  */
 sealed class Screen(val route: String) {
-
-    /** 首页 */
     data object Home : Screen("home")
-
-    /** 记一笔 / 编辑账单 */
     data class AddTransaction(val transactionId: String? = null) : Screen(
         if (transactionId != null) "add_transaction?transactionId=$transactionId" else "add_transaction"
     ) {
@@ -38,22 +36,11 @@ sealed class Screen(val route: String) {
             const val ARG_TRANSACTION_ID = "transactionId"
         }
     }
-
-    /** 统计 */
     data object Stats : Screen("stats")
-
-    /** 设置 */
     data object Settings : Screen("settings")
-
-    /** 分类管理 */
     data object CategoryManage : Screen("category_manage")
 }
 
-/**
- * 根据当前路由获取 Dock 选中索引
- *
- * Dock 项顺序: 0=首页, 1=记一笔, 2=统计, 3=设置
- */
 private fun getDockIndex(route: String?): Int = when {
     route == null -> 0
     route == Screen.Home.route -> 0
@@ -76,21 +63,15 @@ fun BillNavHost(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val dockItems = getDockItems()
-
-    // 判断是否显示 Dock（AddTransaction 页面隐藏）
     val showDock = currentRoute?.startsWith("add_transaction") != true
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // === 内容区域：全屏延伸 ===
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 内容区域：全屏延伸
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
             modifier = Modifier.fillMaxSize()
         ) {
-            // 首页
             composable(Screen.Home.route) {
                 HomeScreen(
                     onNavigateToAddTransaction = {
@@ -101,8 +82,6 @@ fun BillNavHost(
                     }
                 )
             }
-
-            // 记一笔 / 编辑账单
             composable(
                 route = Screen.AddTransaction.ROUTE_PATTERN,
                 arguments = listOf(
@@ -120,29 +99,22 @@ fun BillNavHost(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
-
-            // 统计
             composable(Screen.Stats.route) {
                 StatsScreen()
             }
-
-            // 设置
             composable(Screen.Settings.route) {
                 SettingsScreen()
             }
-
-            // 分类管理
             composable(Screen.CategoryManage.route) {
                 SettingsScreen()
             }
         }
 
-        // === 悬浮 Dock：覆盖在内容底部 ===
+        // 悬浮 Dock：WebView 实现，覆盖在内容底部
         if (showDock) {
-            LiquidGlassDock(
-                items = dockItems,
+            LiquidGlassDockWebView(
                 selectedIndex = getDockIndex(currentRoute),
-                onItemClick = { index ->
+                onItemSelected = { index ->
                     when (index) {
                         0 -> navController.navigate(Screen.Home.route) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
@@ -164,6 +136,8 @@ fun BillNavHost(
                 },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(100.dp)
                     .navigationBarsPadding()
             )
         }

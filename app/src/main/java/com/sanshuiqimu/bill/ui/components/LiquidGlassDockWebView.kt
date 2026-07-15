@@ -2,6 +2,7 @@ package com.sanshuiqimu.bill.ui.components
 
 import android.annotation.SuppressLint
 import android.graphics.Color
+import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -14,7 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 
 /**
- * WebView 与 Android 之间的通信桥梁
+ * JS 回调桥梁
  */
 class DockBridge(
     private val onItemSelected: (Int) -> Unit
@@ -26,13 +27,12 @@ class DockBridge(
 }
 
 /**
- * 液态玻璃 Dock - WebView 版本
+ * 液态玻璃 Dock - WebView 实现
  *
- * 原模原样加载 dock.html，通过 JavascriptInterface 与 Android 通信。
- * WebView 背景透明，悬浮在内容上方。
+ * 加载 assets/dock.html，保留完整的液态玻璃视觉效果和弹簧动画交互。
+ * WebView 背景透明，悬浮在原生内容上方。
  *
- * 注意：调用方必须通过 modifier 指定宽高（如 fillMaxWidth + height），
- * 否则 WebView 尺寸为 0 不会渲染。
+ * 调用方必须通过 modifier 指定宽度和高度。
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -43,9 +43,13 @@ fun LiquidGlassDockWebView(
 ) {
     val context = LocalContext.current
 
-    // 创建并记住 WebView
+    // 用数组包装回调，确保 remember 不捕获过时引用
+    val callbackRef = remember { arrayOf<((Int) -> Unit)?>(null) }
+    callbackRef[0] = onItemSelected
+
     val webView = remember {
         WebView(context).apply {
+            // 基础设置
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.allowFileAccess = true
@@ -55,36 +59,45 @@ fun LiquidGlassDockWebView(
             settings.loadWithOverviewMode = true
             settings.useWideViewPort = true
 
-            // 透明背景
+            // 透明背景 - 关键！
             setBackgroundColor(Color.TRANSPARENT)
 
-            // 禁用滚动条
+            // 禁用滚动
             isVerticalScrollBarEnabled = false
             isHorizontalScrollBarEnabled = false
 
-            webViewClient = WebViewClient()
+            // 确保布局参数正确
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
 
-            // 加载 dock.html
+            // 页面加载完成后通知 Android
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    // 页面就绪后同步当前选中项
+                    view?.evaluateJavascript("window.setDockIndex($selectedIndex);", null)
+                }
+            }
+
+            // 绑定 JS 接口
+            addJavascriptInterface(
+                DockBridge { index -> callbackRef[0]?.invoke(index) },
+                "AndroidDock"
+            )
+
+            // 加载 dock
             loadUrl("file:///android_asset/dock.html")
         }
     }
 
-    // 每次回调变化时重新绑定 JavascriptInterface
-    DisposableEffect(onItemSelected) {
-        webView.removeJavascriptInterface("AndroidDock")
-        webView.addJavascriptInterface(
-            DockBridge(onItemSelected),
-            "AndroidDock"
-        )
-        onDispose { }
-    }
-
-    // 当 selectedIndex 从外部变化时，调用 JS 同步 dock 位置
+    // 外部 selectedIndex 变化时同步到 HTML
     LaunchedEffect(selectedIndex) {
         webView.evaluateJavascript("window.setDockIndex($selectedIndex);", null)
     }
 
-    // WebView 销毁时清理
+    // 销毁清理
     DisposableEffect(webView) {
         onDispose {
             webView.destroy()
