@@ -1,7 +1,6 @@
 package com.sanshuiqimu.bill.ui.components
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.graphics.Color
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -31,6 +30,9 @@ class DockBridge(
  *
  * 原模原样加载 dock.html，通过 JavascriptInterface 与 Android 通信。
  * WebView 背景透明，悬浮在内容上方。
+ *
+ * 注意：调用方必须通过 modifier 指定宽高（如 fillMaxWidth + height），
+ * 否则 WebView 尺寸为 0 不会渲染。
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -50,22 +52,31 @@ fun LiquidGlassDockWebView(
             settings.allowContentAccess = true
             settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
             settings.mediaPlaybackRequiresUserGesture = false
+            settings.loadWithOverviewMode = true
+            settings.useWideViewPort = true
 
             // 透明背景
             setBackgroundColor(Color.TRANSPARENT)
-            setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+
+            // 禁用滚动条
+            isVerticalScrollBarEnabled = false
+            isHorizontalScrollBarEnabled = false
 
             webViewClient = WebViewClient()
-
-            // 添加 JS 接口
-            addJavascriptInterface(
-                DockBridge(onItemSelected),
-                "AndroidDock"
-            )
 
             // 加载 dock.html
             loadUrl("file:///android_asset/dock.html")
         }
+    }
+
+    // 每次回调变化时重新绑定 JavascriptInterface
+    DisposableEffect(onItemSelected) {
+        webView.removeJavascriptInterface("AndroidDock")
+        webView.addJavascriptInterface(
+            DockBridge(onItemSelected),
+            "AndroidDock"
+        )
+        onDispose { }
     }
 
     // 当 selectedIndex 从外部变化时，调用 JS 同步 dock 位置
