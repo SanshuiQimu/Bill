@@ -220,7 +220,7 @@ fun SettingsScreen(
                         Column {
                             Text("观账阁", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "版本 1.0.1",
+                                "版本 1.0.2",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
