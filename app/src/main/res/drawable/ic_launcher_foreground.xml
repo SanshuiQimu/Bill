@@ -5,70 +5,171 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- 钱包主体外框 -->
+    <!-- ==================== 传统飞檐建筑（牌楼） ==================== -->
+
+    <!-- 第一层飞檐（上层屋顶） -->
+    <path
+        android:fillColor="#F5F5F5"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.8"
+        android:pathData="M30,30
+                          C38,22 44,20 54,20
+                          C64,20 70,22 78,30
+                          L74,30
+                          C68,25 62,23 54,23
+                          C46,23 40,25 34,30 Z" />
+
+    <!-- 上层屋顶主体 -->
+    <path
+        android:fillColor="#E8E8E8"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.6"
+        android:pathData="M32,30
+                          L76,30
+                          L72,36
+                          L36,36 Z" />
+
+    <!-- 屋脊装饰（顶饰） -->
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M52,18
+                          L56,18
+                          L55,15
+                          L53,15 Z" />
+
+    <!-- 第二层飞檐（下层屋顶） -->
+    <path
+        android:fillColor="#F0F0F0"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.8"
+        android:pathData="M26,40
+                          C36,34 44,33 54,33
+                          C64,33 72,34 82,40
+                          L78,40
+                          C70,36 62,35 54,35
+                          C46,35 38,36 30,40 Z" />
+
+    <!-- 下层屋顶主体 -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.6"
+        android:pathData="M28,40
+                          L80,40
+                          L76,46
+                          L32,46 Z" />
+
+    <!-- 立柱（左右两根） -->
+    <path
+        android:fillColor="#E8E8E8"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.5"
+        android:pathData="M36,46 L40,46 L40,64 L36,64 Z" />
+    <path
+        android:fillColor="#E8E8E8"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.5"
+        android:pathData="M68,46 L72,46 L72,64 L68,64 Z" />
+
+    <!-- 匾额 -->
+    <path
+        android:fillColor="#D4AF37"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.3"
+        android:pathData="M44,48 L64,48 L64,53 L44,53 Z" />
+
+    <!-- ==================== 放大镜 ==================== -->
+
+    <!-- 镜片外圈（金属边框） -->
+    <path
+        android:fillColor="#E8E8E8"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1.2"
+        android:pathData="M54,52
+                          C48,52 43,57 43,63
+                          C43,69 48,74 54,74
+                          C60,74 65,69 65,63
+                          C65,57 60,52 54,52 Z" />
+
+    <!-- 镜片内圈（玻璃） -->
+    <path
+        android:fillColor="#F0F8FF"
+        android:fillAlpha="0.6"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.4"
+        android:pathData="M54,54
+                          C49,54 45,58 45,63
+                          C45,68 49,72 54,72
+                          C59,72 63,68 63,63
+                          C63,58 59,54 54,54 Z" />
+
+    <!-- 镜片高光 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M30,32
-                          L78,32
-                          C81.866,32 85,35.134 85,39
-                          L85,73
-                          C85,76.866 81.866,80 78,80
-                          L30,80
-                          C26.134,80 23,76.866 23,73
-                          L23,39
-                          C23,35.134 26.134,32 30,32 Z" />
+        android:fillAlpha="0.7"
+        android:pathData="M50,57
+                          C49,58 48,60 48,62
+                          C48,63 48.5,64 49,64
+                          C49.5,63 50,61 51,59
+                          C51,58 50.5,57 50,57 Z" />
 
-    <!-- 钱包顶部翻盖 -->
+    <!-- 放大镜手柄 -->
     <path
-        android:fillColor="#E8F5E9"
-        android:pathData="M30,32
-                          L70,32
-                          L70,28
-                          C70,25.791 68.209,24 66,24
-                          L34,24
-                          C31.791,24 30,25.791 30,28
-                          Z" />
+        android:fillColor="#D4AF37"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.5"
+        android:pathData="M62,72
+                          L70,80
+                          L73,77
+                          L65,69 Z" />
 
-    <!-- 钱包卡扣 -->
-    <path
-        android:fillColor="#2E7D32"
-        android:pathData="M75,50
-                          L82,50
-                          C83.105,50 84,50.895 84,52
-                          L84,60
-                          C84,61.105 83.105,62 82,62
-                          L75,62
-                          C72.791,62 71,60.209 71,58
-                          L71,54
-                          C71,51.791 72.791,50 75,50 Z" />
+    <!-- ==================== 展开的书籍 ==================== -->
 
-    <!-- 钱币符号 ¥ -->
+    <!-- 书籍底座 -->
     <path
-        android:fillColor="#2E7D32"
-        android:strokeColor="#2E7D32"
-        android:strokeWidth="0"
-        android:pathData="M48,44
-                          L52,52
-                          L56,44
-                          L60,44
-                          L54,55
-                          L58,55
-                          L58,58
-                          L54,58
-                          L54,61
-                          L58,61
-                          L58,64
-                          L54,64
-                          L54,70
-                          L50,70
-                          L50,64
-                          L46,64
-                          L46,61
-                          L50,61
-                          L50,58
-                          L46,58
-                          L46,55
-                          L50,55
-                          L44,44
-                          Z" />
+        android:fillColor="#F5F5F5"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.8"
+        android:pathData="M28,78
+                          C36,75 44,74 54,74
+                          C64,74 72,75 80,78
+                          L82,86
+                          C74,83 64,82 54,82
+                          C44,82 34,83 26,86 Z" />
+
+    <!-- 书页左半 -->
+    <path
+        android:fillColor="#FAFAFA"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.4"
+        android:pathData="M28,78
+                          C36,76 42,75 53,75
+                          L53,84
+                          C42,84 36,85 28,87 Z" />
+
+    <!-- 书页右半 -->
+    <path
+        android:fillColor="#FAFAFA"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="0.4"
+        android:pathData="M80,78
+                          C72,76 66,75 55,75
+                          L55,84
+                          C66,84 72,85 80,87 Z" />
+
+    <!-- 书脊（中线） -->
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M53,75 L55,75 L55,84 L53,84 Z" />
+
+    <!-- 书页文字线（左页） -->
+    <path
+        android:strokeColor="#B0B0B0"
+        android:strokeWidth="0.5"
+        android:pathData="M34,79 L48,78 M34,81 L48,80 M34,83 L48,82" />
+    <path
+        android:strokeColor="#B0B0B0"
+        android:strokeWidth="0.5"
+        android:pathData="M60,78 L74,79 M60,80 L74,81 M60,82 L74,83" />
+
 </vector>

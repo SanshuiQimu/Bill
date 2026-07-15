@@ -5,29 +5,25 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- 绿色渐变背景（通过多个圆叠加模拟渐变） -->
+    <!-- 深青绿色渐变背景（模拟原图的 teal/blue-green 渐变） -->
     <path
-        android:fillColor="#1B5E20"
+        android:fillColor="#0D4D4D"
         android:pathData="M0,0 L108,0 L108,108 L0,108 Z" />
 
-    <!-- 渐变叠加层 -->
+    <!-- 渐变叠加层（左上偏亮） -->
     <path
-        android:fillColor="#2E7D32"
+        android:fillColor="#1A6B6B"
         android:pathData="M0,0 L108,0 L108,54 L0,108 Z" />
 
-    <!-- 高光层 -->
+    <!-- 左上高光层 -->
     <path
-        android:fillColor="#388E3C"
+        android:fillColor="#2D8A8A"
         android:pathData="M0,0 L54,0 L0,54 Z" />
 
-    <!-- 装饰圆点 -->
+    <!-- 右下加深层 -->
     <path
-        android:fillColor="#43A047"
-        android:fillAlpha="0.3"
-        android:pathData="M90,20 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+        android:fillColor="#063838"
+        android:fillAlpha="0.5"
+        android:pathData="M54,54 L108,54 L108,108 L54,108 Z" />
 
-    <path
-        android:fillColor="#66BB6A"
-        android:fillAlpha="0.2"
-        android:pathData="M18,90 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
 </vector>
