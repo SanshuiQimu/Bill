@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,17 +32,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sanshuiqimu.bill.ui.theme.BalanceBlue
-import com.sanshuiqimu.bill.ui.theme.ExpenseRed
-import com.sanshuiqimu.bill.ui.theme.IncomeGreen
 
 /**
- * Dock 导航项数据
+ * Dock 导航项
  */
 data class DockItem(
     val label: String,
@@ -52,12 +50,14 @@ data class DockItem(
 )
 
 /**
- * 液态玻璃风格底部 Dock 导航栏
+ * 液态玻璃风格底部 Dock 导航栏 (原生 Compose 实现)
  *
- * 灵感来源于 Liquid Glass Dock HTML 设计
- * - 半透明毛玻璃背景
- * - 滑动指示器跟随选中项
- * - 每个标签有独立主题色
+ * 视觉效果还原自 Liquid Glass Dock HTML:
+ * - 半透明毛玻璃背景 + 模糊
+ * - 圆角药丸形状 (28dp)
+ * - 滑动指示器带弹性弹簧动画
+ * - 每个标签独立主题色
+ * - 选中项放大 + 高亮
  */
 @Composable
 fun LiquidGlassDock(
@@ -66,8 +66,11 @@ fun LiquidGlassDock(
     onItemClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 每个标签的宽度
+    val itemWidth = 81.dp
+    // 指示器相对左边的偏移
     val indicatorOffset by animateDpAsState(
-        targetValue = (selectedIndex * 82).dp,
+        targetValue = (selectedIndex * itemWidth.value).dp,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow
@@ -75,100 +78,134 @@ fun LiquidGlassDock(
         label = "indicatorOffset"
     )
 
-    val indicatorScale by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "indicatorScale"
-    )
-
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 16.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // Dock 底座 - 液态玻璃效果
-        Surface(
+        // === Dock 底座 - 毛玻璃效果 ===
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp)
-                .clip(RoundedCornerShape(28.dp)),
-            color = Color.White.copy(alpha = 0.25f),
-            shadowElevation = 0.dp
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .blur(20.dp)
-                    .background(Color.White.copy(alpha = 0.15f))
-            )
-        }
+                .height(56.dp)
+                .clip(RoundedCornerShape(28.dp))
+                .background(Color.White.copy(alpha = 0.20f))
+                .blur(30.dp)
+        )
 
         // 阴影层
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp)
+                .height(56.dp)
                 .clip(RoundedCornerShape(28.dp))
                 .shadow(
-                    elevation = 16.dp,
+                    elevation = 20.dp,
                     shape = RoundedCornerShape(28.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.15f),
+                    ambientColor = Color.Black.copy(alpha = 0.12f),
                     spotColor = Color.Black.copy(alpha = 0.08f)
                 )
         )
 
-        // 滑动指示器
+        // 高光渐变层
         Box(
             modifier = Modifier
-                .offset(x = indicatorOffset - 0.dp)
-                .width(82.dp)
-                .height(48.dp)
-                .padding(top = 6.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .fillMaxWidth()
+                .height(56.dp)
+                .clip(RoundedCornerShape(28.dp))
                 .background(
-                    items[selectedIndex].accentColor.copy(alpha = 0.15f)
+                    Brush.linearGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.35f),
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.15f)
+                        )
+                    )
                 )
         )
 
-        // Dock 项
+        // === 滑动指示器 ===
+        Box(
+            modifier = Modifier
+                .offset(x = indicatorOffset + 4.dp, y = 4.dp)
+                .width(73.dp)
+                .height(48.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(items[selectedIndex].accentColor.copy(alpha = 0.12f))
+        ) {
+            // 指示器内部高光
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.4f),
+                                Color.Transparent,
+                                Color.White.copy(alpha = 0.2f)
+                            )
+                        )
+                    )
+            )
+        }
+
+        // === Dock 项 ===
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp),
+                .height(56.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEachIndexed { index, item ->
                 val isSelected = index == selectedIndex
-                val iconColor by animateFloatAsState(
-                    targetValue = if (isSelected) 1f else 0.4f,
-                    label = "iconAlpha"
+
+                val itemAlpha by animateFloatAsState(
+                    targetValue = if (isSelected) 1f else 0.45f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    ),
+                    label = "itemAlpha"
+                )
+
+                val itemScale by animateFloatAsState(
+                    targetValue = if (isSelected) 1.15f else 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    ),
+                    label = "itemScale"
                 )
 
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .clickable { onItemClick(index) }
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = 6.dp)
+                        .graphicsLayer {
+                            scaleX = itemScale
+                            scaleY = itemScale
+                        },
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
                         imageVector = item.icon,
                         contentDescription = item.label,
-                        tint = if (isSelected) item.accentColor else Color.Gray.copy(alpha = iconColor),
+                        tint = if (isSelected) item.accentColor else Color.Gray.copy(alpha = itemAlpha),
                         modifier = Modifier.size(24.dp)
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = item.label,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isSelected) item.accentColor else Color.Gray.copy(alpha = iconColor)
+                        color = if (isSelected) item.accentColor else Color.Gray.copy(alpha = itemAlpha)
                     )
                 }
             }
@@ -178,32 +215,10 @@ fun LiquidGlassDock(
 
 /**
  * 获取记账本应用的 Dock 项列表
- *
- * 映射关系:
- * 1. 钱包 (Wallet) → 首页 - 绿色
- * 2. 礼物 (Gift) → 记一笔 - 红色
- * 3. 购物袋 (Cart) → 统计 - 蓝色
- * 4. 个人 (Me) → 设置 - 橙色
  */
 fun getDockItems(): List<DockItem> = listOf(
-    DockItem(
-        label = "首页",
-        icon = Icons.Filled.AccountBalanceWallet,
-        accentColor = IncomeGreen
-    ),
-    DockItem(
-        label = "记一笔",
-        icon = Icons.Filled.CardGiftcard,
-        accentColor = ExpenseRed
-    ),
-    DockItem(
-        label = "统计",
-        icon = Icons.Filled.ShoppingBag,
-        accentColor = BalanceBlue
-    ),
-    DockItem(
-        label = "设置",
-        icon = Icons.Filled.Person,
-        accentColor = Color(0xFFFF9F0A)
-    )
+    DockItem("首页", Icons.Filled.AccountBalanceWallet, Color(0xFF04B285)),
+    DockItem("记一笔", Icons.Filled.CardGiftcard, Color(0xFFFF3760)),
+    DockItem("统计", Icons.Filled.ShoppingBag, Color(0xFF0A84FF)),
+    DockItem("设置", Icons.Filled.Person, Color(0xFFFF9F0A))
 )
