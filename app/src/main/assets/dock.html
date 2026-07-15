@@ -87,7 +87,7 @@
       z-index: 1;
       overflow: hidden;
       padding: 4px;
-      background: rgba(var(--dock-bg-rgb), 0.23);
+      background: rgba(var(--dock-bg-rgb), 0.55);
       transform: translateZ(0);
       -webkit-mask-image: var(--mask-solid);
       mask-image: var(--mask-solid);
@@ -253,8 +253,9 @@
       opacity: 1;
       pointer-events: auto;
       touch-action: none;
-      background-color: rgba(var(--slider-tint-rgb), 0.15);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      background-color: rgba(255, 255, 255, 0.35);
+      box-shadow: inset 0 0 8px rgba(255,255,255,0.5), 0 2px 8px rgba(0,0,0,0.12);
+      border: 1px solid rgba(255,255,255,0.4);
       transform: translateZ(0);
       -webkit-mask-image: var(--slider-mask-solid);
       mask-image: var(--slider-mask-solid);
@@ -266,7 +267,7 @@
     }
 
     #frosted-slider.expanding {
-      background-color: rgba(var(--slider-tint-rgb), 0.06);
+      background-color: rgba(255, 255, 255, 0.15);
       box-shadow:
         inset 0 0 var(--inner-shadow-blur) var(--inner-shadow-spread) var(--inner-shadow-color),
         0 2px var(--outer-shadow-blur) rgba(0,0,0,0.2);
@@ -752,6 +753,8 @@
         setTimeout(() => r.remove(), 600);
       }
       if (dockPressed) { dockPressed = false; if (!isDragging) { dockTargetShiftX = 0; dockTargetShiftY = 0; } }
+      // touchend 后备：确保 wasDragging 立即重置，不阻止后续点击
+      if (wasDragging && !isDragging) { wasDragging = false; }
       if (isDragging && !isAutoAnimating) {
         isDragging = false;
         dockTargetShiftX = 0; dockTargetShiftY = 0;
@@ -769,6 +772,9 @@
 
     window.addEventListener("pointerup", handleGlobalUp);
     window.addEventListener("pointercancel", handleGlobalUp);
+    // Android WebView 后备：touchend 确保状态重置
+    window.addEventListener("touchend", handleGlobalUp);
+    window.addEventListener("touchcancel", handleGlobalUp);
 
     dockRoot.addEventListener("pointerdown", (e) => {
       dockPressed = true;
@@ -784,9 +790,23 @@
     });
 
     document.querySelectorAll(".dock-items-wrap .dock-item").forEach((item, i) => {
+      // Android WebView 中 click 可能不触发，用 touchend 替代
+      item.addEventListener("touchend", (e) => {
+        if (wasDragging || isDragging) { e.preventDefault(); return; }
+        if (Math.abs(targetX - TARGET_POSITIONS[i]) < 1) return;
+        e.preventDefault();
+        isSnapping = false;
+        targetX = TARGET_POSITIONS[i];
+        isAutoAnimating = true;
+        setExpanding(true);
+        setActiveIndex(i);
+        notifyAndroid(i);
+      });
+      // 保留 click 作为桌面端后备
       item.addEventListener("click", (e) => {
         if (wasDragging || isDragging) { e.preventDefault(); return; }
         if (Math.abs(targetX - TARGET_POSITIONS[i]) < 1) return;
+        e.preventDefault();
         isSnapping = false;
         targetX = TARGET_POSITIONS[i];
         isAutoAnimating = true;
