@@ -253,9 +253,9 @@
       opacity: 1;
       pointer-events: auto;
       touch-action: none;
-      background-color: rgba(255, 255, 255, 0.35);
-      box-shadow: inset 0 0 8px rgba(255,255,255,0.5), 0 2px 8px rgba(0,0,0,0.12);
-      border: 1px solid rgba(255,255,255,0.4);
+      background-color: rgba(255, 255, 255, 0.45);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.8), inset 0 -1px 1px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.15);
+      border: 1.5px solid rgba(255,255,255,0.6);
       transform: translateZ(0);
       -webkit-mask-image: var(--slider-mask-solid);
       mask-image: var(--slider-mask-solid);
@@ -267,10 +267,11 @@
     }
 
     #frosted-slider.expanding {
-      background-color: rgba(255, 255, 255, 0.15);
+      background-color: rgba(255, 255, 255, 0.25);
       box-shadow:
-        inset 0 0 var(--inner-shadow-blur) var(--inner-shadow-spread) var(--inner-shadow-color),
-        0 2px var(--outer-shadow-blur) rgba(0,0,0,0.2);
+        inset 0 1px 2px rgba(255,255,255,0.9),
+        inset 0 -1px 2px rgba(0,0,0,0.08),
+        0 4px var(--outer-shadow-blur) rgba(0,0,0,0.25);
     }
 
     #frosted-slider::after {
@@ -791,11 +792,15 @@
 
     document.querySelectorAll(".dock-items-wrap .dock-item").forEach((item, i) => {
       // Android WebView 中 click 可能不触发，用 touchend 替代
+      // 注意：pointerdown 会设 isDragging=true，所以这里只检查 sliderHasMoved
+      // （只有手指真正滑动过才为 true，简单点击不会）
       item.addEventListener("touchend", (e) => {
-        if (wasDragging || isDragging) { e.preventDefault(); return; }
-        if (Math.abs(targetX - TARGET_POSITIONS[i]) < 1) return;
+        if (sliderHasMoved) { e.preventDefault(); return; }
         e.preventDefault();
+        e.stopPropagation();
         isSnapping = false;
+        isAutoAnimating = false;
+        isDragging = false;
         targetX = TARGET_POSITIONS[i];
         isAutoAnimating = true;
         setExpanding(true);
@@ -804,10 +809,12 @@
       });
       // 保留 click 作为桌面端后备
       item.addEventListener("click", (e) => {
-        if (wasDragging || isDragging) { e.preventDefault(); return; }
-        if (Math.abs(targetX - TARGET_POSITIONS[i]) < 1) return;
+        if (sliderHasMoved) { e.preventDefault(); return; }
         e.preventDefault();
+        e.stopPropagation();
         isSnapping = false;
+        isAutoAnimating = false;
+        isDragging = false;
         targetX = TARGET_POSITIONS[i];
         isAutoAnimating = true;
         setExpanding(true);
