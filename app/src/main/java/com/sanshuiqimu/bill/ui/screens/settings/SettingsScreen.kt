@@ -218,9 +218,9 @@ fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.size(12.dp))
                         Column {
-                            Text("记账本", style = MaterialTheme.typography.titleMedium)
+                            Text("观账阁", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "版本 1.0.0",
+                                "版本 1.0.0Beta",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

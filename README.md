@@ -1,13 +1,13 @@
 <div align="center">
 
-# 🧾 记账本 Bill
+# 🧾 观账阁 Bill
 
 ### 一个简洁实用的个人记账应用 · Rust CLI + Android 原生
 
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20CLI-blue?style=flat-square)](https://github.com/SanshuiQimu/Bill)
 [![Language](https://img.shields.io/badge/Language-Kotlin%20%7C%20Rust-orange?style=flat-square)](https://github.com/SanshuiQimu/Bill)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-brightgreen?style=flat-square)](https://github.com/SanshuiQimu/Bill/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.0Beta-brightgreen?style=flat-square)](https://github.com/SanshuiQimu/Bill/releases)
 
 </div>
 
@@ -17,7 +17,7 @@
 
 > **Android 7.0+** · 点击下方链接下载 APK 安装包
 
-### [⬇ 下载 bill-v1.0.0.apk](https://github.com/SanshuiQimu/Bill/releases/download/v1.0.0/bill-v1.0.0.apk)
+### [⬇ 下载 观账阁-v1.0.0Beta.apk](https://github.com/SanshuiQimu/Bill/releases/download/v1.0.0Beta/guanzhangge-v1.0.0Beta.apk)
 
 安装前请在手机设置中开启「允许安装未知来源应用」。
 
@@ -149,7 +149,7 @@ Bill/
 
 #### 方式一：直接安装 APK
 
-1. 点击 [下载链接](https://github.com/SanshuiQimu/Bill/releases/download/v1.0.0/bill-v1.0.0.apk) 下载 APK
+1. 点击 [下载链接](https://github.com/SanshuiQimu/Bill/releases/download/v1.0.0Beta/guanzhangge-v1.0.0Beta.apk) 下载 APK
 2. 在手机上打开下载的 APK 文件
 3. 允许安装未知来源应用
 4. 安装完成，开始记账

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 应用名称 -->
-    <string name="app_name">记账本</string>
+    <string name="app_name">观账阁</string>
 
     <!-- 通用按钮 -->
     <string name="action_confirm">确定</string>
@@ -95,12 +95,12 @@
     <string name="mine_category">分类管理</string>
     <string name="mine_backup">数据备份</string>
     <string name="mine_settings">设置</string>
-    <string name="mine_about">关于记账本</string>
+    <string name="mine_about">关于观账阁</string>
     <string name="mine_share">分享给好友</string>
 
     <!-- 关于 -->
     <string name="about_version">版本</string>
-    <string name="about_description">记账本是一款简洁好用的个人记账工具，帮你轻松管理日常收支。</string>
+    <string name="about_description">观账阁是一款简洁好用的个人记账工具，帮你轻松管理日常收支。</string>
     <string name="about_author">作者：Sanshuiqimu</string>
 
     <!-- 设置 -->
