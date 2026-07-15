@@ -1,25 +1,10 @@
 package com.sanshuiqimu.bill.ui.navigation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -27,6 +12,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.sanshuiqimu.bill.ui.components.LiquidGlassDock
+import com.sanshuiqimu.bill.ui.components.getDockItems
 import com.sanshuiqimu.bill.ui.screens.add.AddTransactionScreen
 import com.sanshuiqimu.bill.ui.screens.home.HomeScreen
 import com.sanshuiqimu.bill.ui.screens.settings.SettingsScreen
@@ -45,10 +32,7 @@ sealed class Screen(val route: String) {
         if (transactionId != null) "add_transaction?transactionId=$transactionId" else "add_transaction"
     ) {
         companion object {
-            /** NavHost 注册时使用的路由模式（带可选参数占位符） */
             const val ROUTE_PATTERN = "add_transaction?transactionId={transactionId}"
-
-            /** 参数名 */
             const val ARG_TRANSACTION_ID = "transactionId"
         }
     }
@@ -64,65 +48,26 @@ sealed class Screen(val route: String) {
 }
 
 /**
- * 底部导航栏项数据
+ * 根据当前路由获取 Dock 选中索引
  *
- * @param name 显示名称
- * @param route 路由路径
- * @param icon 图标
+ * Dock 项顺序: 0=首页, 1=记一笔, 2=统计, 3=设置
  */
-data class BottomNavItem(
-    val name: String,
-    val route: String,
-    val icon: ImageVector
-)
-
-/**
- * 底部导航栏项列表
- * 首页、统计、记一笔、设置
- */
-val bottomNavItems = listOf(
-    BottomNavItem("首页", Screen.Home.route, Icons.Filled.Home),
-    BottomNavItem("统计", Screen.Stats.route, Icons.Filled.BarChart),
-    BottomNavItem("记一笔", Screen.AddTransaction().route, Icons.Filled.Add),
-    BottomNavItem("设置", Screen.Settings.route, Icons.Filled.Settings)
-)
-
-/**
- * 底部导航栏
- *
- * @param currentRoute 当前路由
- * @param onNavigate 导航回调
- */
-@Composable
-fun BillBottomBar(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit
-) {
-    NavigationBar {
-        bottomNavItems.forEach { item ->
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.name
-                    )
-                },
-                label = { Text(text = item.name) },
-                selected = currentRoute == item.route ||
-                        currentRoute?.startsWith("${item.route}?") == true,
-                onClick = { onNavigate(item.route) }
-            )
-        }
-    }
+private fun getDockIndex(route: String?): Int = when {
+    route == null -> 0
+    route == Screen.Home.route -> 0
+    route.startsWith("add_transaction") -> 1
+    route == Screen.Stats.route -> 2
+    route == Screen.Settings.route -> 3
+    route == Screen.CategoryManage.route -> 3
+    else -> 0
 }
 
 /**
  * 主导航 Host
  *
- * 管理 Home、AddTransaction、Stats、Settings、CategoryManage 五个页面，
- * 底部包含 4 个导航标签。在「记一笔」页面隐藏底部导航栏。
- *
- * @param navController 导航控制器
+ * 使用液态玻璃风格 Dock 替代传统底部导航栏。
+ * Dock 包含 4 个标签：首页、记一笔、统计、设置。
+ * 在「记一笔」编辑页面隐藏 Dock。
  */
 @Composable
 fun BillNavHost(
@@ -130,22 +75,32 @@ fun BillNavHost(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val dockItems = getDockItems()
+
+    // 判断是否显示 Dock（AddTransaction 页面隐藏）
+    val showDock = currentRoute?.startsWith("add_transaction") != true
 
     Scaffold(
         bottomBar = {
-            // 在 AddTransaction 页面隐藏底部导航栏
-            if (currentRoute?.startsWith("add_transaction") != true) {
-                BillBottomBar(
-                    currentRoute = currentRoute,
-                    onNavigate = { route ->
-                        if (route == Screen.AddTransaction().route) {
-                            // 记一笔：直接导航到新页面
-                            navController.navigate(route)
-                        } else {
-                            navController.navigate(route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
+            if (showDock) {
+                LiquidGlassDock(
+                    items = dockItems,
+                    selectedIndex = getDockIndex(currentRoute),
+                    onItemClick = { index ->
+                        when (index) {
+                            0 -> navController.navigate(Screen.Home.route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                            1 -> navController.navigate(Screen.AddTransaction().route)
+                            2 -> navController.navigate(Screen.Stats.route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                            3 -> navController.navigate(Screen.Settings.route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
