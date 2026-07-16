@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -53,6 +54,7 @@ import com.sanshuiqimu.bill.util.TransactionType
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    onNavigateToGroup: () -> Unit = {},
     viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
 ) {
     val context = LocalContext.current
@@ -123,6 +125,42 @@ fun SettingsScreen(
                     Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.size(4.dp))
                     Text("添加分类")
+                }
+            }
+
+            item { Divider() }
+
+            // === 小组共享记账 ===
+            item {
+                SectionHeader(title = "小组共享记账")
+            }
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onNavigateToGroup
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Filled.Group,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.size(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("小组共享记账本", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                "创建小组，成员间实时同步记账数据",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
 
@@ -220,7 +258,7 @@ fun SettingsScreen(
                         Column {
                             Text("观账阁", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "版本 1.0.9",
+                                "版本 1.1.0",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
