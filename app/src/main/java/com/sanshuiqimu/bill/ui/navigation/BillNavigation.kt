@@ -1,15 +1,20 @@
 package com.sanshuiqimu.bill.ui.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -17,15 +22,21 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.sanshuiqimu.bill.ui.components.LiquidGlassDockWebView
 import com.sanshuiqimu.bill.ui.screens.add.AddTransactionScreen
 import com.sanshuiqimu.bill.ui.screens.group.GroupScreen
 import com.sanshuiqimu.bill.ui.screens.home.HomeScreen
 import com.sanshuiqimu.bill.ui.screens.settings.SettingsScreen
 import com.sanshuiqimu.bill.ui.screens.stats.StatsScreen
 
+/**
+ * 页面路由定义
+ */
 sealed class Screen(val route: String) {
+
+    /** 首页 */
     data object Home : Screen("home")
+
+    /** 记一笔 / 编辑账单 */
     data class AddTransaction(val transactionId: String? = null) : Screen(
         if (transactionId != null) "add_transaction?transactionId=$transactionId" else "add_transaction"
     ) {
@@ -34,34 +45,101 @@ sealed class Screen(val route: String) {
             const val ARG_TRANSACTION_ID = "transactionId"
         }
     }
+
+    /** 统计 */
     data object Stats : Screen("stats")
+
+    /** 设置 */
     data object Settings : Screen("settings")
+
+    /** 分类管理 */
     data object CategoryManage : Screen("category_manage")
+
+    /** 小组共享记账 */
     data object Group : Screen("group")
 }
 
-private fun getDockIndex(route: String?): Int = when {
-    route == null -> 0
-    route == Screen.Home.route -> 0
-    route.startsWith("add_transaction") -> 1
-    route == Screen.Stats.route -> 2
-    route == Screen.Settings.route || route == Screen.Group.route || route == Screen.CategoryManage.route -> 3
-    else -> 0
+/**
+ * 底部导航栏项数据
+ */
+data class BottomNavItem(
+    val name: String,
+    val route: String,
+    val icon: ImageVector
+)
+
+/**
+ * 底部导航栏项列表
+ */
+val bottomNavItems = listOf(
+    BottomNavItem("首页", Screen.Home.route, Icons.Filled.Home),
+    BottomNavItem("统计", Screen.Stats.route, Icons.Filled.BarChart),
+    BottomNavItem("记一笔", Screen.AddTransaction().route, Icons.Filled.Add),
+    BottomNavItem("设置", Screen.Settings.route, Icons.Filled.Settings)
+)
+
+/**
+ * 底部导航栏
+ */
+@Composable
+fun BillBottomBar(
+    currentRoute: String?,
+    onNavigate: (String) -> Unit
+) {
+    NavigationBar {
+        bottomNavItems.forEach { item ->
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.name
+                    )
+                },
+                label = { Text(text = item.name) },
+                selected = currentRoute == item.route ||
+                        currentRoute?.startsWith("${item.route}?") == true,
+                onClick = { onNavigate(item.route) }
+            )
+        }
+    }
 }
 
+/**
+ * 主导航 Host
+ */
 @Composable
 fun BillNavHost(
     navController: NavHostController = rememberNavController()
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val showDock = currentRoute?.startsWith("add_transaction") != true
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        bottomBar = {
+            if (currentRoute?.startsWith("add_transaction") != true) {
+                BillBottomBar(
+                    currentRoute = currentRoute,
+                    onNavigate = { route ->
+                        if (route == Screen.AddTransaction().route) {
+                            navController.navigate(route)
+                        } else {
+                            navController.navigate(route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
+                )
+            }
+        }
+    ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
@@ -73,6 +151,7 @@ fun BillNavHost(
                     }
                 )
             }
+
             composable(
                 route = Screen.AddTransaction.ROUTE_PATTERN,
                 arguments = listOf(
@@ -90,55 +169,28 @@ fun BillNavHost(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+
             composable(Screen.Stats.route) {
                 StatsScreen()
             }
+
             composable(Screen.Settings.route) {
                 SettingsScreen(
                     onNavigateToGroup = { navController.navigate(Screen.Group.route) }
                 )
             }
+
             composable(Screen.CategoryManage.route) {
                 SettingsScreen(
                     onNavigateToGroup = { navController.navigate(Screen.Group.route) }
                 )
             }
+
             composable(Screen.Group.route) {
                 GroupScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
-        }
-
-        if (showDock) {
-            LiquidGlassDockWebView(
-                selectedIndex = getDockIndex(currentRoute),
-                onItemSelected = { index ->
-                    when (index) {
-                        0 -> navController.navigate(Screen.Home.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                        1 -> navController.navigate(Screen.AddTransaction().route)
-                        2 -> navController.navigate(Screen.Stats.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                        3 -> navController.navigate(Screen.Settings.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(90.dp)
-                    .navigationBarsPadding()
-            )
         }
     }
 }
