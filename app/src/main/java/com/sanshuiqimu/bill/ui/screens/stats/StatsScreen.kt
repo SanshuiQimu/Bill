@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -63,14 +64,15 @@ fun StatsScreen(
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("统计报表") })
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         if (transactionCount == 0) {
             EmptyState(
                 title = "暂无数据",
                 message = "当前时间段没有交易记录",
                 icon = Icons.Filled.BarChart,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(top = innerPadding.calculateTopPadding())
             )
             return@Scaffold
         }
@@ -78,8 +80,8 @@ fun StatsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
+                .padding(top = innerPadding.calculateTopPadding()),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // 模式切换

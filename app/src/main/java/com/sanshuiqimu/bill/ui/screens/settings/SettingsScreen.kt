@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -69,13 +70,14 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("设置") })
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
+                .padding(top = innerPadding.calculateTopPadding()),
+            contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 100.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // === 分类管理 ===
@@ -258,7 +260,7 @@ fun SettingsScreen(
                         Column {
                             Text("观账阁", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "版本 1.2.1",
+                                "版本 1.2.2",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

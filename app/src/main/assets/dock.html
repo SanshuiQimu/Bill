@@ -578,23 +578,19 @@
       }
     });
 
-    document.querySelectorAll(".dock-items-wrap .dock-item").forEach((item, i) => {
-      item.addEventListener("touchend", (e) => {
-        if (sliderHasMoved || wasDragging) { e.preventDefault(); return; }
-        e.preventDefault(); e.stopPropagation();
-        isSnapping = false; isAutoAnimating = false; isDragging = false;
-        targetX = TARGET_POSITIONS[i]; isAutoAnimating = true;
-        setExpanding(true); setActiveIndex(i);
-        notifyAndroid(i);
-      });
-      item.addEventListener("click", (e) => {
-        if (sliderHasMoved || wasDragging || isDragging) { e.preventDefault(); return; }
-        if (Math.abs(targetX - TARGET_POSITIONS[i]) < 1) return;
-        e.preventDefault(); e.stopPropagation();
-        isSnapping = false; targetX = TARGET_POSITIONS[i]; isAutoAnimating = true;
-        setExpanding(true); setActiveIndex(i);
-        notifyAndroid(i);
-      });
+    // dockRoot 级别的 click 处理 — 绕过 CSS mask 导致子元素无法接收触摸事件的问题
+    dockRoot.addEventListener("click", (e) => {
+      // 拖拽后产生的 click 忽略
+      if (sliderHasMoved || wasDragging || isDragging) { e.preventDefault(); return; }
+      var rect = dockRoot.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      // 根据 x 坐标判断点击了哪个 item: 3px, 83px, 162px, 242px
+      var idx = x < 83 ? 0 : x < 162 ? 1 : x < 242 ? 2 : 3;
+      e.preventDefault(); e.stopPropagation();
+      isSnapping = false; isAutoAnimating = true; isDragging = false;
+      targetX = TARGET_POSITIONS[idx];
+      setExpanding(true); setActiveIndex(idx);
+      notifyAndroid(idx);
     });
   </script>
 </body>
