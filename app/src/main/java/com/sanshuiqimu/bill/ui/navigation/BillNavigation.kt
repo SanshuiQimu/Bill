@@ -2,14 +2,11 @@ package com.sanshuiqimu.bill.ui.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -17,15 +14,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.sanshuiqimu.bill.ui.components.LiquidGlassDockWebView
+import com.sanshuiqimu.bill.ui.components.LiquidGlassDock
+import com.sanshuiqimu.bill.ui.components.getDockItems
 import com.sanshuiqimu.bill.ui.screens.add.AddTransactionScreen
 import com.sanshuiqimu.bill.ui.screens.home.HomeScreen
 import com.sanshuiqimu.bill.ui.screens.settings.SettingsScreen
 import com.sanshuiqimu.bill.ui.screens.stats.StatsScreen
 
-/**
- * 页面路由定义
- */
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data class AddTransaction(val transactionId: String? = null) : Screen(
@@ -51,22 +46,16 @@ private fun getDockIndex(route: String?): Int = when {
     else -> 0
 }
 
-/**
- * 主导航 Host
- *
- * 内容全屏延伸（edge-to-edge），液态玻璃 Dock 悬浮覆盖在底部。
- * 在「记一笔」编辑页面隐藏 Dock。
- */
 @Composable
 fun BillNavHost(
     navController: NavHostController = rememberNavController()
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val dockItems = getDockItems()
     val showDock = currentRoute?.startsWith("add_transaction") != true
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 内容区域：全屏延伸
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
@@ -110,11 +99,11 @@ fun BillNavHost(
             }
         }
 
-        // 悬浮 Dock：WebView 实现，覆盖在内容底部
         if (showDock) {
-            LiquidGlassDockWebView(
+            LiquidGlassDock(
+                items = dockItems,
                 selectedIndex = getDockIndex(currentRoute),
-                onItemSelected = { index ->
+                onItemClick = { index ->
                     when (index) {
                         0 -> navController.navigate(Screen.Home.route) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
@@ -136,8 +125,6 @@ fun BillNavHost(
                 },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(100.dp)
                     .navigationBarsPadding()
             )
         }
