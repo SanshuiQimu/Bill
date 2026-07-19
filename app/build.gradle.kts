@@ -13,8 +13,8 @@ android {
         applicationId = "com.sanshuiqimu.bill"
         minSdk = 24
         targetSdk = 34
-        versionCode = 16
-        versionName = "1.2.2"
+        versionCode = 17
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

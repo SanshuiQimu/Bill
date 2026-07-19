@@ -3,24 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Liquid Glass Dock</title>
-
-  <!-- ===== 用户提供的 CSS，原封不动，不做任何改动 ===== -->
+  <title>Glass Bottom Navigation</title>
   <style>
     :root {
-      --bg-color: #f4f4f7;
-      --fg-color: #000000;
-      --theme-color: rgb(4, 178, 133);
-      --dock-bg-rgb: 255, 255, 255;
-      --slider-tint-rgb: 0, 0, 0;
-      --inner-shadow-color: #ffffff;
-      --inner-shadow-blur: 20px;
-      --inner-shadow-spread: -5px;
-      --outer-shadow-blur: 24px;
-      --clipL: 4px;
-      --clipW: 79px;
-      --clipT: 3.5px;
-      --clipH: 48px;
+      /* 主题色 — 与记账 app 的绿色一致 */
+      --accent: #04b285;
+      /* 底座磨砂玻璃参数 (对应 nav_style: pillBlurSigma=26, pillFilmStart=0.42, pillFilmEnd=0.26) */
+      --bar-blur: 26px;
+      --bar-saturate: 1.6;
+      --bar-film-start: 0.42;
+      --bar-film-end: 0.26;
+      --bar-frost: 0.09;
+      --bar-radius: 26px;
+      /* 选中胶囊参数 (对应 nav_style: selectedStartOpacity=0.50, selectedEndOpacity=0.30) */
+      --pill-blur: 26px;
+      --pill-start-opacity: 0.50;
+      --pill-end-opacity: 0.30;
+      --pill-frost: 0.16;
+      --pill-radial-opacity: 0.14;
+      --pill-radius: 22px;
+      /* 布局参数 */
+      --bar-width-factor: 0.86;
+      --bar-height: 60px;
+      --edge-padding: 16px;
     }
 
     * {
@@ -29,568 +34,293 @@
       user-select: none;
     }
 
-    html,
-    body {
+    html, body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
+      background: transparent !important;
       font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
-      color: var(--fg-color);
-      background:
-        radial-gradient(circle at 20% 18%, rgba(4, 178, 133, 0.24), transparent 34%),
-        radial-gradient(circle at 82% 24%, rgba(117, 92, 255, 0.22), transparent 32%),
-        radial-gradient(circle at 62% 86%, rgba(255, 159, 10, 0.2), transparent 28%),
-        var(--bg-color);
     }
 
-    .demo-bg {
+    /* ===== 底部导航栏容器 ===== */
+    .glass-nav-container {
       position: fixed;
-      inset: 0;
-      padding: 48px 24px 140px;
-      display: grid;
-      place-items: center;
-    }
-
-    .demo-card {
-      width: min(720px, 92vw);
-      min-height: 420px;
-      border-radius: 36px;
-      padding: 36px;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.75), rgba(255,255,255,0.22)),
-        repeating-linear-gradient(45deg, rgba(0,0,0,0.05) 0 12px, transparent 12px 24px);
-      box-shadow: 0 30px 90px rgba(0,0,0,0.12);
+      bottom: var(--edge-padding);
+      left: 0;
+      right: 0;
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .demo-title {
-      margin: 0;
-      font-size: clamp(34px, 8vw, 72px);
-      letter-spacing: -0.06em;
-      line-height: 0.95;
-    }
-
-    .demo-text {
-      max-width: 460px;
-      line-height: 1.7;
-      color: rgba(0,0,0,0.56);
-      font-size: 15px;
-    }
-
-    .color-bars {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-top: 28px;
-    }
-
-    .color-bars span {
-      height: 92px;
-      border-radius: 24px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
-    }
-
-    .color-bars span:nth-child(1) { background: #04b285; }
-    .color-bars span:nth-child(2) { background: #ff375f; }
-    .color-bars span:nth-child(3) { background: #0a84ff; }
-    .color-bars span:nth-child(4) { background: #ff9f0a; }
-
-    /* 底部状态栏容器 */
-    .bottom-controls {
-      position: fixed;
-      left: calc(50% - 162px);
-      bottom: 24px;
-      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
       pointer-events: none;
     }
 
-    .dock-wrapper {
-      width: 324px;
-      height: 55px;
-      pointer-events: auto;
-    }
-
-    .dock-container {
-      width: 100%;
-      height: 100%;
+    /* ===== 磨砂玻璃底座 (FrostedPill) ===== */
+    .glass-bar {
       position: relative;
-      transform-origin: center center;
+      width: calc(100vw * var(--bar-width-factor));
+      height: var(--bar-height);
+      border-radius: var(--bar-radius);
       pointer-events: auto;
-      --innerGlowOp: 0;
-      --edgeGlowOp: 0;
-      --glowRadius: 1;
-      touch-action: none;
-    }
-
-    .dock-shadow-layer {
-      position: absolute;
-      top: 2px;
-      bottom: 2px;
-      left: 8px;
-      right: 8px;
-      z-index: 0;
-      pointer-events: none;
-      border-radius: 25px;
-      box-shadow:
-        0 16px 32px 2px rgba(0, 0, 0, 0.15),
-        0 4px 12px 1px rgba(0, 0, 0, 0.08);
-    }
-
-    /* 整个 Dock 底座的液态玻璃 */
-    .dock-base {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
       overflow: hidden;
-      padding: 4px;
-      background: rgba(var(--dock-bg-rgb), 0.23);
-      transform: translateZ(0);
-      -webkit-mask-image: var(--mask-solid);
-      mask-image: var(--mask-solid);
-      -webkit-mask-size: 100% 100%;
-      mask-size: 100% 100%;
-      -webkit-backdrop-filter: url(#dock-glass-filter) saturate(1.5);
-      backdrop-filter: url(#dock-glass-filter) saturate(1.5);
-    }
-
-    .glow-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      overflow: hidden;
-      pointer-events: none;
-      background: radial-gradient(
-        calc(100px * var(--glowRadius)) circle at var(--innerX, -999px) var(--innerY, -999px),
-        rgba(255, 255, 255, calc(0.5 * var(--innerGlowOp))) 0%,
-        rgba(255, 255, 255, calc(0.1 * var(--innerGlowOp))) 50%,
-        transparent 80%
+      /* 薄膜渐变 — 白色半透明，模拟玻璃材质 */
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, var(--bar-film-start)) 0%,
+        rgba(255, 255, 255, var(--bar-film-end)) 100%
       );
-      -webkit-mask-image: var(--mask-solid);
-      mask-image: var(--mask-solid);
-      -webkit-mask-size: 100% 100%;
-      mask-size: 100% 100%;
+      /* 磨砂模糊 + 饱和度增强 — 模拟 Liquid Glass 的色彩放大 */
+      -webkit-backdrop-filter: blur(var(--bar-blur)) saturate(var(--bar-saturate));
+      backdrop-filter: blur(var(--bar-blur)) saturate(var(--bar-saturate));
+      /* 边缘高光 */
+      box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.5),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.15),
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 2px 8px rgba(0, 0, 0, 0.08);
+      transform: translateZ(0);
     }
 
-    .dock-base::after {
+    /* 霜化覆盖层 */
+    .glass-bar::before {
       content: "";
       position: absolute;
       inset: 0;
-      z-index: 10;
+      background: rgba(255, 255, 255, var(--bar-frost));
       pointer-events: none;
-      background:
-        radial-gradient(
-          calc(120px * var(--glowRadius)) circle at var(--edgeX, -999px) var(--edgeY, -999px),
-          rgba(255, 255, 255, calc(0.7 * var(--edgeGlowOp))) 0%,
-          rgba(255, 255, 255, calc(0.15 * var(--edgeGlowOp))) 50%,
-          transparent 80%
-        ),
-        linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%),
-        linear-gradient(-35deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%);
-      mix-blend-mode: plus-lighter;
-      -webkit-mask-image: var(--mask-hollow);
-      mask-image: var(--mask-hollow);
-      -webkit-mask-size: 100% 100%;
-      mask-size: 100% 100%;
+      z-index: 1;
     }
 
-    .ripple-layer {
+    /* 顶部高光线 */
+    .glass-bar::after {
+      content: "";
       position: absolute;
-      inset: 0;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+      pointer-events: none;
       z-index: 2;
-      overflow: hidden;
-      pointer-events: none;
-      -webkit-mask-image: var(--mask-solid);
-      mask-image: var(--mask-solid);
-      -webkit-mask-size: 100% 100%;
-      mask-size: 100% 100%;
     }
 
-    .ripple-wave {
+    /* ===== 选中胶囊 (Selected Pill) ===== */
+    .selected-pill {
       position: absolute;
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
+      top: 4px;
+      bottom: 4px;
+      border-radius: var(--pill-radius);
       pointer-events: none;
-      opacity: 1;
-      background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 60%);
-      transform: translate(-50%, -50%) scale(0);
-      animation: ripple-anim 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+      z-index: 3;
+      overflow: hidden;
+      /* 渐变背景 */
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, var(--pill-start-opacity)) 0%,
+        rgba(255, 255, 255, var(--pill-end-opacity)) 100%
+      );
+      /* 独立模糊层 */
+      -webkit-backdrop-filter: blur(var(--pill-blur)) saturate(var(--bar-saturate));
+      backdrop-filter: blur(var(--pill-blur)) saturate(var(--bar-saturate));
+      box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.6),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.2),
+        0 2px 8px rgba(0, 0, 0, 0.06);
+      /* 弹性动画 — 340ms 对应 nav_style 的 AnimationController duration */
+      transition: left 340ms cubic-bezier(0.25, 1, 0.5, 1),
+                  width 340ms cubic-bezier(0.25, 1, 0.5, 1);
+      transform: translateZ(0);
     }
 
-    @keyframes ripple-anim {
-      to {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(2.2);
-      }
-    }
-
-    .dock-items-wrap,
-    .dock-active-layer {
+    /* 胶囊霜化层 */
+    .selected-pill::before {
+      content: "";
       position: absolute;
       inset: 0;
-      z-index: 998;
+      background: rgba(255, 255, 255, var(--pill-frost));
+      pointer-events: none;
     }
 
-    .dock-items-wrap {
-      color: var(--fg-color);
-      touch-action: none;
-      -webkit-mask-image: linear-gradient(#000, #000), var(--slider-mask-solid);
-      mask-image: linear-gradient(#000, #000), var(--slider-mask-solid);
-      -webkit-mask-size: 100% 100%, var(--clipW) var(--clipH);
-      mask-size: 100% 100%, var(--clipW) var(--clipH);
-      -webkit-mask-position: 0 0, var(--clipL) var(--clipT);
-      mask-position: 0 0, var(--clipL) var(--clipT);
-      -webkit-mask-repeat: no-repeat, no-repeat;
-      mask-repeat: no-repeat, no-repeat;
-      -webkit-mask-composite: destination-out;
-      mask-composite: exclude;
-    }
-
-    .dock-item {
+    /* 胶囊径向高光 (对应 selectedRadialOpacity=0.14) */
+    .selected-pill::after {
+      content: "";
       position: absolute;
-      top: 3.5px;
-      width: 81.5px;
-      height: 48px;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 90% 90% at 49% 20%,
+        rgba(255, 255, 255, var(--pill-radial-opacity)) 0%,
+        transparent 70%
+      );
+      pointer-events: none;
+    }
+
+    /* ===== 导航项 ===== */
+    .nav-items {
+      position: relative;
+      display: flex;
+      width: 100%;
+      height: 100%;
+      z-index: 4;
+    }
+
+    .nav-item {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: inherit;
+      gap: 2px;
       cursor: pointer;
-      z-index: 3;
-      transform-origin: center center;
-      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      pointer-events: auto;
+      transition: transform 200ms ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .dock-item:nth-child(1) { left: 3px; }
-    .dock-item:nth-child(2) { left: 83px; }
-    .dock-item:nth-child(3) { left: 162px; }
-    .dock-item:nth-child(4) { left: 242px; }
-
-    .dock-item svg {
-      width: 25px;
-      height: 25px;
+    .nav-item:active {
+      transform: scale(0.92);
     }
 
-    .dock-item span {
-      margin-top: 4px;
+    .nav-item svg {
+      width: 24px;
+      height: 24px;
+      transition: color 200ms ease, transform 200ms ease;
+      color: #888;
+    }
+
+    .nav-item span {
       font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
+      font-weight: 600;
+      color: #999;
+      transition: color 200ms ease;
+      letter-spacing: 0.3px;
     }
 
-    /* 被滑块遮罩出来的高亮图标层 */
-    .dock-active-layer {
-      color: var(--theme-color);
-      opacity: 1;
-      pointer-events: none;
-      -webkit-mask-image: var(--slider-mask-solid);
-      mask-image: var(--slider-mask-solid);
-      -webkit-mask-size: var(--clipW) var(--clipH);
-      mask-size: var(--clipW) var(--clipH);
-      -webkit-mask-position: var(--clipL) var(--clipT);
-      mask-position: var(--clipL) var(--clipT);
-      -webkit-mask-repeat: no-repeat;
-      mask-repeat: no-repeat;
-    }
-
-    .dock-container.expanding .dock-active-layer .dock-item {
+    /* 选中状态 — 图标和文字变为主题色 */
+    .nav-item.active svg {
+      color: var(--accent);
       transform: scale(1.1);
     }
 
-    /* 可拖拽滑块的液态玻璃：这里用了更强的色散滤镜 */
-    #frosted-slider {
-      position: absolute;
-      top: 3.5px;
-      left: 4px;
-      width: 79px;
-      height: 48px;
-      z-index: 999;
-      overflow: hidden;
-      opacity: 1;
-      pointer-events: auto;
-      touch-action: none;
-      background-color: rgba(var(--slider-tint-rgb), 0.15);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      transform: translateZ(0);
-      -webkit-mask-image: var(--slider-mask-solid);
-      mask-image: var(--slider-mask-solid);
-      -webkit-mask-size: 100% 100%;
-      mask-size: 100% 100%;
-      -webkit-backdrop-filter: url(#liquid-glass-dispersion-filter);
-      backdrop-filter: url(#liquid-glass-dispersion-filter);
-      transition: background-color 0.4s ease, box-shadow 0.4s ease;
+    .nav-item.active span {
+      color: var(--accent);
+      font-weight: 700;
     }
-
-    #frosted-slider.expanding {
-      background-color: rgba(var(--slider-tint-rgb), 0.06);
-      box-shadow:
-        inset 0 0 var(--inner-shadow-blur) var(--inner-shadow-spread) var(--inner-shadow-color),
-        0 2px var(--outer-shadow-blur) rgba(0,0,0,0.2);
-    }
-
-    #frosted-slider::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 9999;
-      pointer-events: none;
-      opacity: 0;
-      background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, transparent 50%),
-        linear-gradient(-35deg, rgba(255, 255, 255, 0.9) 0%, transparent 50%);
-      mix-blend-mode: plus-lighter;
-      -webkit-mask-image: var(--slider-mask-hollow);
-      mask-image: var(--slider-mask-hollow);
-      -webkit-mask-size: 100% 100%;
-      mask-size: 100% 100%;
-      transition: opacity 0.4s ease;
-    }
-
-    #frosted-slider.expanding::after {
-      opacity: 1;
-    }
-
-    @media (max-width: 430px) {
-      .bottom-controls {
-        bottom: 18px;
-      }
-    }
-  </style>
-
-  <!-- ===== 补充定义: mask 变量 + WebView 透明背景 + border-radius 回退 ===== -->
-  <style>
-    /* WebView 中需要透明背景以显示 App 内容 */
-    html, body { background: transparent !important; }
-
-    /* mask 变量定义 — 用 SVG data URI 定义圆角矩形遮罩 */
-    :root {
-      /* dock 底座: 324x55 圆角 27.5 */
-      --mask-solid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='324' height='55'%3E%3Crect width='324' height='55' rx='27.5' ry='27.5' fill='black'/%3E%3C/svg%3E");
-      /* dock 底座空心: 只显示边缘 */
-      --mask-hollow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='324' height='55'%3E%3Crect width='324' height='55' rx='27.5' ry='27.5' fill='none' stroke='black' stroke-width='3'/%3E%3C/svg%3E");
-      /* 滑块: 79x48 圆角 24 */
-      --slider-mask-solid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='79' height='48'%3E%3Crect width='79' height='48' rx='24' ry='24' fill='black'/%3E%3C/svg%3E");
-      /* 滑块空心 */
-      --slider-mask-hollow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='79' height='48'%3E%3Crect width='79' height='48' rx='24' ry='24' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E");
-    }
-
-    /* backdrop-filter url() 在 Android WebView 不支持 SVG 滤镜引用，用 blur 回退 */
-    @supports not (backdrop-filter: url(#x)) {
-      .dock-base {
-        -webkit-backdrop-filter: blur(20px) saturate(1.5) !important;
-        backdrop-filter: blur(20px) saturate(1.5) !important;
-        border-radius: 27.5px;
-      }
-      #frosted-slider {
-        -webkit-backdrop-filter: blur(12px) saturate(1.4) !important;
-        backdrop-filter: blur(12px) saturate(1.4) !important;
-        border-radius: 24px;
-      }
-    }
-
-    /* 兜底: 如果 mask 变量不生效，用 border-radius 确保圆角 */
-    .dock-base { border-radius: 27.5px; }
-    .glow-layer { border-radius: 27.5px; }
-    .ripple-layer { border-radius: 27.5px; }
-    .dock-base::after { border-radius: 27.5px; }
-    #frosted-slider { border-radius: 24px; }
-    #frosted-slider::after { border-radius: 24px; }
   </style>
 </head>
 
 <body>
-  <!-- SVG 滤镜定义 (CSS 中 backdrop-filter 引用) -->
-  <svg style="position:absolute;width:0;height:0;" aria-hidden="true">
-    <defs>
-      <!-- dock 底座玻璃滤镜 -->
-      <filter id="dock-glass-filter" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="0.4" result="blur1"/>
-        <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur2"/>
-        <feColorMatrix in="blur2" type="saturate" values="1.3" result="saturated"/>
-        <feBlend in="blur1" in2="saturated" mode="normal" result="blended"/>
-        <feComposite in="blended" in2="SourceGraphic" operator="atop"/>
-      </filter>
-      <!-- 滑块液态玻璃色散滤镜 -->
-      <filter id="liquid-glass-dispersion-filter" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="blur"/>
-        <feColorMatrix in="blur" type="saturate" values="1.4" result="saturated"/>
-        <feComponentTransfer in="saturated" result="dispersion">
-          <feFuncR type="discrete" tableValues="0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1"/>
-          <feFuncG type="discrete" tableValues="0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1"/>
-          <feFuncB type="discrete" tableValues="0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1"/>
-        </feComponentTransfer>
-      </filter>
-    </defs>
-  </svg>
-
-  <nav class="bottom-controls" aria-label="底部状态栏">
-    <div class="dock-wrapper" id="dock-wrapper">
-      <div class="dock-container" id="dock-root">
-        <div class="dock-shadow-layer"></div>
-        <div class="dock-base"><div class="glow-layer"></div></div>
-        <div class="ripple-layer"></div>
-        <div class="dock-items-wrap">
-          <div class="dock-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M 3 9 v -1 a 2 2 0 0 1 2 -2 h 14 a 2 2 0 0 1 2 2 v 1 z"></path><path d="M 3 11 v 5 a 2 2 0 0 0 2 2 h 14 a 2 2 0 0 0 2 -2 v -5 z"></path></svg><span>首页</span>
-          </div>
-          <div class="dock-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M 10.5 10 C 10.5 4, 3 5, 6.5 10 Z"></path><path d="M 13.5 10 C 13.5 4, 21 5, 17.5 10 Z"></path><rect x="4" y="10" width="6.5" height="3" rx="0.5"></rect><rect x="13.5" y="10" width="6.5" height="3" rx="0.5"></rect><path d="M 5 13 h 5.5 v 6.5 a 0.5 0.5 0 0 1 -0.5 0.5 h -4.5 a 0.5 0.5 0 0 1 -0.5 -0.5 z"></path><path d="M 13.5 13 h 5.5 v 6.5 a 0.5 0.5 0 0 1 -0.5 0.5 h -4.5 a 0.5 0.5 0 0 1 -0.5 -0.5 z"></path></svg><span>记一笔</span>
-          </div>
-          <div class="dock-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M 5 9 h 14 v 9 a 2 2 0 0 1 -2 2 h -10 a 2 2 0 0 1 -2 -2 z"></path><path d="M 8 9 v -3 a 4 4 0 0 1 8 0 v 3"></path></svg><span>统计</span>
-          </div>
-          <div class="dock-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span>设置</span>
-          </div>
+  <div class="glass-nav-container">
+    <div class="glass-bar" id="glass-bar">
+      <!-- 选中胶囊 -->
+      <div class="selected-pill" id="selected-pill"></div>
+      <!-- 导航项 -->
+      <div class="nav-items" id="nav-items">
+        <div class="nav-item active" data-index="0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>首页</span>
         </div>
-        <div id="frosted-slider"></div>
-        <div class="dock-active-layer" id="active-mask">
-          <div class="dock-item"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M 3 9 v -1 a 2 2 0 0 1 2 -2 h 14 a 2 2 0 0 1 2 2 v 1 z"></path><path d="M 3 11 v 5 a 2 2 0 0 0 2 2 h 14 a 2 2 0 0 0 2 -2 v -5 z"></path></svg><span>首页</span></div>
-          <div class="dock-item"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M 10.5 10 C 10.5 4, 3 5, 6.5 10 Z"></path><path d="M 13.5 10 C 13.5 4, 21 5, 17.5 10 Z"></path><rect x="4" y="10" width="6.5" height="3" rx="0.5"></rect><rect x="13.5" y="10" width="6.5" height="3" rx="0.5"></rect><path d="M 5 13 h 5.5 v 6.5 a 0.5 0.5 0 0 1 -0.5 0.5 h -4.5 a 0.5 0.5 0 0 1 -0.5 -0.5 z"></path><path d="M 13.5 13 h 5.5 v 6.5 a 0.5 0.5 0 0 1 -0.5 0.5 h -4.5 a 0.5 0.5 0 0 1 -0.5 -0.5 z"></path></svg><span>记一笔</span></div>
-          <div class="dock-item"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" d="M 5 9 h 14 v 9 a 2 2 0 0 1 -2 2 h -10 a 2 2 0 0 1 -2 -2 z"></path><path fill="none" d="M 8 9 v -3 a 4 4 0 0 1 8 0 v 3"></path></svg><span>统计</span></div>
-          <div class="dock-item"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span>设置</span></div>
+        <div class="nav-item" data-index="1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>记一笔</span>
+        </div>
+        <div class="nav-item" data-index="2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>统计</span>
+        </div>
+        <div class="nav-item" data-index="3">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>设置</span>
         </div>
       </div>
     </div>
-  </nav>
+  </div>
 
   <script>
-    const TARGET_POSITIONS = [4, 83, 162, 241];
-    const THEME_COLORS = ["rgb(4,178,133)", "rgb(255,55,95)", "rgb(10,132,255)", "rgb(255,159,10)"];
-    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
-    const rubberBand = (distance, limit) => (distance * 0.05 * limit) / (Math.abs(distance * 0.05) + limit);
-    const SOFT_K = 0.045, SOFT_D = 0.84, JELLY_K = 0.01, JELLY_D = 0.95;
+    var items = document.querySelectorAll('.nav-item');
+    var pill = document.getElementById('selected-pill');
+    var currentIndex = 0;
 
-    const dockRoot = document.getElementById("dock-root");
-    const slider = document.getElementById("frosted-slider");
-    let currentActiveIndex = 0, dockPressed = false, isDragging = false, isExpanding = false;
-    let isAutoAnimating = false, isSnapping = false;
-    let targetX = TARGET_POSITIONS[0], currentX = TARGET_POSITIONS[0], lastX = TARGET_POSITIONS[0];
-    let vel = 0, touchOffsetX = 0, sliderHasMoved = false, wasDragging = false;
-    let pointerStartXSlider = 0, pointerStartYSlider = 0;
-    let dockTargetShiftX = 0, dockCurrentShiftX = 0, dockTargetShiftY = 0, dockCurrentShiftY = 0;
-    let dockPressStartX = 0, dockPressStartY = 0;
-    let dockBaseScale = 1, sliderBaseScale = 1, sliderScaleVel = 0;
-    let currentSX = 1, currentSY = 1, sxVel = 0, syVel = 0;
-    let lastTime = performance.now();
+    // 计算并设置选中胶囊位置
+    function updatePill(index) {
+      var item = items[index];
+      if (!item) return;
+      var rect = item.getBoundingClientRect();
+      var barRect = document.getElementById('glass-bar').getBoundingClientRect();
+      pill.style.left = (rect.left - barRect.left + 4) + 'px';
+      pill.style.width = (rect.width - 8) + 'px';
+    }
 
-    function setExpanding(val) { isExpanding = val; slider.classList.toggle("expanding", val); dockRoot.classList.toggle("expanding", val); }
-    function setActiveIndex(idx) { currentActiveIndex = idx; document.documentElement.style.setProperty("--theme-color", THEME_COLORS[idx]); }
+    // 切换选中项
+    function selectIndex(index) {
+      if (index < 0 || index >= items.length) return;
+      currentIndex = index;
+      items.forEach(function(item, i) {
+        if (i === index) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+      updatePill(index);
+      notifyAndroid(index);
+    }
 
+    // Android JS 桥梁
     function notifyAndroid(idx) {
       if (window.AndroidDock && window.AndroidDock.onDockItemSelected) {
         window.AndroidDock.onDockItemSelected(idx);
       }
     }
+
+    // Android → JS 同步选中项（不触发回调）
     window.setDockIndex = function(idx) {
-      if (idx < 0 || idx > 3) return;
-      if (Math.abs(targetX - TARGET_POSITIONS[idx]) < 1 && currentActiveIndex === idx) return;
-      isSnapping = false; isAutoAnimating = false; isDragging = false;
-      targetX = TARGET_POSITIONS[idx];
-      currentX = TARGET_POSITIONS[idx];
-      setActiveIndex(idx);
-      slider.style.left = currentX + "px";
+      if (idx < 0 || idx >= items.length) return;
+      if (idx === currentIndex) return;
+      currentIndex = idx;
+      items.forEach(function(item, i) {
+        if (i === idx) item.classList.add('active');
+        else item.classList.remove('active');
+      });
+      updatePill(idx);
     };
 
-    function physLoop(time) {
-      let dt = time - lastTime; lastTime = time; if (dt > 50) dt = 16.66;
-      const dist = Math.abs(targetX - currentX);
-      const lerpFactor = isAutoAnimating ? 0.13 : (isDragging ? 0.25 : 0.08);
-      currentX += (targetX - currentX) * lerpFactor;
-      if (Math.abs(targetX - currentX) < 0.01) currentX = targetX;
-      slider.style.left = currentX + "px";
-      vel = currentX - lastX; lastX = currentX;
-
-      let targetSX = 1, targetSY = 1;
-      const absVel = Math.abs(vel);
-      const majorDeform = Math.min(absVel * 0.04, 0.15), minorDeform = Math.min(absVel * 0.04, 0.08);
-      if (vel < -0.5) { targetSX = 1 - majorDeform; targetSY = 1 + minorDeform; }
-      else if (vel > 0.5) { targetSX = 1 + minorDeform; targetSY = 1 - majorDeform; }
-      sxVel += (targetSX - currentSX) * JELLY_K; syVel += (targetSY - currentSY) * JELLY_K;
-      sxVel *= JELLY_D; syVel *= JELLY_D; currentSX += sxVel; currentSY += syVel;
-      if (absVel < 0.1 && Math.abs(currentSX - 1) < 0.005 && Math.abs(sxVel) < 0.005) { currentSX = 1; sxVel = 0; }
-      if (absVel < 0.1 && Math.abs(currentSY - 1) < 0.005 && Math.abs(syVel) < 0.005) { currentSY = 1; syVel = 0; }
-
-      const targetSliderScale = isExpanding ? 1.35 : 1;
-      sliderScaleVel += (targetSliderScale - sliderBaseScale) * SOFT_K; sliderScaleVel *= SOFT_D; sliderBaseScale += sliderScaleVel;
-      if (Math.abs(sliderBaseScale - targetSliderScale) < 0.002 && Math.abs(sliderScaleVel) < 0.002) { sliderBaseScale = targetSliderScale; sliderScaleVel = 0; }
-      slider.style.transform = "scale(" + currentSX * sliderBaseScale + ", " + currentSY * sliderBaseScale + ") translateZ(0)";
-
-      if (isAutoAnimating || isSnapping) {
-        if (isExpanding && ((isAutoAnimating && dist <= 8) || (isSnapping && dist <= 10))) setExpanding(false);
-        if (isExpanding) { dockTargetShiftX = rubberBand(currentX - targetX, 4); dockTargetShiftY = 0; }
-        else if (!dockPressed) { dockTargetShiftX = 0; }
-        if (dist < 0.01 && absVel < 0.01 && !isExpanding) { isAutoAnimating = false; isSnapping = false; }
-      }
-      const targetDockScale = isExpanding ? 1.05 : 1;
-      dockBaseScale += (targetDockScale - dockBaseScale) * ((isAutoAnimating || isSnapping) ? 0.08 : 0.15);
-      if (Math.abs(dockBaseScale - targetDockScale) < 0.001) dockBaseScale = targetDockScale;
-      dockCurrentShiftX += (dockTargetShiftX - dockCurrentShiftX) * 0.15; dockCurrentShiftY += (dockTargetShiftY - dockCurrentShiftY) * 0.15;
-      if (Math.abs(dockCurrentShiftX - dockTargetShiftX) < 0.01) dockCurrentShiftX = dockTargetShiftX;
-      if (Math.abs(dockCurrentShiftY - dockTargetShiftY) < 0.01) dockCurrentShiftY = dockTargetShiftY;
-      dockRoot.style.transform = "translate(" + dockCurrentShiftX + "px, " + dockCurrentShiftY + "px) scale(" + dockBaseScale + ")";
-      requestAnimationFrame(physLoop);
-    }
-    requestAnimationFrame(physLoop);
-
-    window.addEventListener("pointermove", (e) => {
-      if (isDragging && !isAutoAnimating && !isSnapping) {
-        if (Math.abs(e.clientX - pointerStartXSlider) > 5) sliderHasMoved = true;
-        const dx = e.clientX - pointerStartXSlider;
-        targetX = clamp(touchOffsetX + dx, TARGET_POSITIONS[0], TARGET_POSITIONS[3]);
-        dockTargetShiftX = rubberBand(dx, 4); dockTargetShiftY = rubberBand(e.clientY - pointerStartYSlider, 4);
-      } else if (dockPressed && !isDragging) {
-        dockTargetShiftX = rubberBand(e.clientX - dockPressStartX, 4); dockTargetShiftY = rubberBand(e.clientY - dockPressStartY, 4);
-      }
+    // 绑定点击事件
+    items.forEach(function(item, i) {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectIndex(i);
+      });
+      // touchend 优先处理移动端点击
+      item.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectIndex(i);
+      });
     });
 
-    function handleGlobalUp() {
-      if (dockPressed) { dockPressed = false; if (!isDragging) { dockTargetShiftX = 0; dockTargetShiftY = 0; } }
-      if (isDragging && !isAutoAnimating) {
-        isDragging = false; dockTargetShiftX = 0; dockTargetShiftY = 0;
-        if (sliderHasMoved) { wasDragging = true; setTimeout(() => { wasDragging = false; }, 50); }
-        const inertia = Math.max(-80, Math.min(80, vel * 6));
-        const centerPos = currentX + inertia + 39.5;
-        const idx = centerPos < 83 ? 0 : centerPos < 162 ? 1 : centerPos < 241 ? 2 : 3;
-        targetX = TARGET_POSITIONS[idx]; isSnapping = true; setActiveIndex(idx);
-        if (sliderHasMoved) notifyAndroid(idx);
-        if (!sliderHasMoved) setExpanding(false);
-      }
-    }
-    window.addEventListener("pointerup", handleGlobalUp);
-    window.addEventListener("pointercancel", handleGlobalUp);
-    window.addEventListener("touchend", handleGlobalUp);
-    window.addEventListener("touchcancel", handleGlobalUp);
-
-    dockRoot.addEventListener("pointerdown", (e) => {
-      dockPressed = true; dockPressStartX = e.clientX; dockPressStartY = e.clientY;
-      const rect = dockRoot.getBoundingClientRect();
-      const relativeX = e.clientX - rect.left;
-      if (relativeX >= currentX - 5 && relativeX <= currentX + 84) {
-        isAutoAnimating = false; isSnapping = false; sliderHasMoved = false;
-        pointerStartXSlider = e.clientX; pointerStartYSlider = e.clientY;
-        dockTargetShiftX = 0; dockTargetShiftY = 0; isDragging = true; setExpanding(true); touchOffsetX = currentX;
-      }
+    // 页面加载完成后初始化胶囊位置
+    window.addEventListener('load', function() {
+      setTimeout(function() { updatePill(currentIndex); }, 50);
     });
 
-    // dockRoot 级别的 click 处理 — 绕过 CSS mask 导致子元素无法接收触摸事件的问题
-    dockRoot.addEventListener("click", (e) => {
-      // 拖拽后产生的 click 忽略
-      if (sliderHasMoved || wasDragging || isDragging) { e.preventDefault(); return; }
-      var rect = dockRoot.getBoundingClientRect();
-      var x = e.clientX - rect.left;
-      // 根据 x 坐标判断点击了哪个 item: 3px, 83px, 162px, 242px
-      var idx = x < 83 ? 0 : x < 162 ? 1 : x < 242 ? 2 : 3;
-      e.preventDefault(); e.stopPropagation();
-      isSnapping = false; isAutoAnimating = true; isDragging = false;
-      targetX = TARGET_POSITIONS[idx];
-      setExpanding(true); setActiveIndex(idx);
-      notifyAndroid(idx);
+    // 窗口尺寸变化时重新计算
+    window.addEventListener('resize', function() {
+      updatePill(currentIndex);
     });
   </script>
 </body>
